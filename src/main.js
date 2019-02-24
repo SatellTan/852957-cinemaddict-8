@@ -9,15 +9,17 @@ const MAX_CARDS = 10;
 const filmsListContainerMain = document.querySelector(`.films-list .films-list__container`);
 const filmsListContainer = document.querySelectorAll(`.films-list--extra .films-list__container`);
 
-const randomNumber = () => { return Math.floor(Math.random() * (MAX_CARDS + 1)); }
+const randomNumber = () => {
+  return Math.floor(Math.random() * (MAX_CARDS + 1));
+};
 
 const onFilterClick = (evt) => {
 
-  const mainNavigationItemActive = document.querySelector('.main-navigation__item--active');
+  const mainNavigationItemActive = document.querySelector(`.main-navigation__item--active`);
   if (mainNavigationItemActive) {
-    mainNavigationItemActive.classList.remove('main-navigation__item--active');
+    mainNavigationItemActive.classList.remove(`main-navigation__item--active`);
   }
-  evt.currentTarget.classList.add('main-navigation__item--active');
+  evt.currentTarget.classList.add(`main-navigation__item--active`);
   filmsListContainerMain.innerHTML = ``;
   createCards(filmsListContainerMain, randomNumber());
 };
@@ -34,7 +36,7 @@ const createFilters = () => {
     let filterCount = randomNumber();
     let active = `false`;
     if (i === (FILTERS.length - 1)) {
-      active  = `true`;
+      active = `true`;
       filterCount = 0;
     }
     makeFilter(FILTERS[i], filterCount, active);
