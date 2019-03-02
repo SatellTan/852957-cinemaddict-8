@@ -1,5 +1,6 @@
 import makeFilter from './make-filter.js';
 import makeCard from './make-card.js';
+import generateData from './data.js';
 
 const FILTERS = [`Favorites`, `History`, `Watchlist`, `All movies`];
 const START_QUANTITY_CARDS = 7;
@@ -8,9 +9,10 @@ const MAX_CARDS = 10;
 
 const filmsListContainerMain = document.querySelector(`.films-list .films-list__container`);
 const filmsListContainer = document.querySelectorAll(`.films-list--extra .films-list__container`);
+let arrayCards = [];
 
-const randomNumber = () => {
-  return Math.floor(Math.random() * (MAX_CARDS + 1));
+const generateRandomNumber = (maxNumber) => {
+  return Math.floor(Math.random() * maxNumber);
 };
 
 const onFilterClick = (evt) => {
@@ -21,7 +23,7 @@ const onFilterClick = (evt) => {
   }
   evt.currentTarget.classList.add(`main-navigation__item--active`);
   filmsListContainerMain.innerHTML = ``;
-  createCards(filmsListContainerMain, randomNumber());
+  createCards(filmsListContainerMain, generateRandomNumber(MAX_CARDS));
 };
 
 const addHandlerOnFilters = () => {
@@ -33,7 +35,7 @@ const addHandlerOnFilters = () => {
 
 const createFilters = () => {
   for (let i = 0; i < FILTERS.length; i++) {
-    let filterCount = randomNumber();
+    let filterCount = generateRandomNumber(MAX_CARDS);
     let active = `false`;
     if (i === (FILTERS.length - 1)) {
       active = `true`;
@@ -44,16 +46,25 @@ const createFilters = () => {
 };
 
 const createCards = (block, number) => {
+  arrayCards = [];
   for (let i = 0; i < number; i++) {
-    makeCard(block);
+    arrayCards.push(generateData());
+  }
+
+  for (const element of arrayCards) {
+    makeCard(block, element);
+  }
+};
+
+const fillListExtra = () => {
+  for (const element of filmsListContainer) {
+    for (let i = 0; i < QUANTITY_CARDS_OF_FILM_LIST_EXTRA; i++) {
+      makeCard(element, arrayCards[generateRandomNumber(arrayCards.length)]);
+    }
   }
 };
 
 createFilters();
 createCards(filmsListContainerMain, START_QUANTITY_CARDS);
-
-for (const element of filmsListContainer) {
-  createCards(element, QUANTITY_CARDS_OF_FILM_LIST_EXTRA);
-}
-
+fillListExtra();
 addHandlerOnFilters();
