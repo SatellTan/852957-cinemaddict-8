@@ -18,6 +18,16 @@ const ALL_FILMS = [
 
 const DESCRIPTION_OPTIONS = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras aliquet varius magna, non porta ligula feugiat eget. Fusce tristique felis at fermentum pharetra. Aliquam id orci ut lectus varius viverra. Nullam nunc ex, convallis sed finibus eget, sollicitudin eget ante. Phasellus eros mauris, condimentum sed nibh vitae, sodales efficitur ipsum. Sed blandit, eros vel aliquam faucibus, purus ex euismod diam, eu luctus nunc ante ut dui. Sed sed nisi sed augue convallis suscipit in sed felis. Aliquam erat volutpat. Nunc fermentum tortor ac porta dapibus. In rutrum ac purus sit amet tempus.`;
 
+const COUNTRYS = [
+  `Canada`,
+  `USA`,
+  `Russia`,
+  `France`,
+  `Argentina`,
+  `China`,
+  `Japan`,
+];
+
 const ALL_POSTERS = [
   `./images/posters/accused.jpg`,
   `./images/posters/blackmail.jpg`,
@@ -37,7 +47,24 @@ const ALL_GENRE = [
   `Historical`,
 ];
 
+const PEOPLE = [
+  `Samuel L. Jackson`,
+  `Catherine Keener`,
+  `Sophia Bush`,
+  `Brad Bird`,
+  `Tim Macoveev`,
+  `Meryl Streep`,
+  `Anne Hathaway`,
+  `Johnny Depp`,
+  `Harrison Ford`,
+  `Steven Spielberg`,
+];
+
+const EMOJI = [`😴`, `😐`, `😀`];
+
 const MAX_SENTENCES_IN_DESCRIPTION = 4;
+const MAX_AGE_LIMIT = 18;
+const MAX_NUMBER_MEN = 3;
 
 const allComments = [
   `Отлично`,
@@ -57,8 +84,6 @@ const allComments = [
 ];
 
 const proffers = DESCRIPTION_OPTIONS.split(`. `);
-
-const currentDate = new Date(Date.now());
 
 const generateRandomNumber = (maxNumber) => {
   return Math.floor(Math.random() * maxNumber);
@@ -80,16 +105,43 @@ const createDescription = () => {
   return `${descriptionArray.join(`. `)}${descriptionArray.length ? `.` : ``}`;
 };
 
+const createDate = (number) => {
+  return new Date(Date.now() + 1 + (generateRandomNumber(number) - number) * 24 * 60 * 60 * 1000);
+};
+
+const createComments = (number) => {
+  const textCommentsArray = getArrayOfUniqueValues(number, allComments);
+  const commentsArray = [];
+  for (const element of textCommentsArray) {
+    const comment = {
+      emoji: EMOJI[generateRandomNumber(EMOJI.length)],
+      text: element,
+      author: PEOPLE[generateRandomNumber(PEOPLE.length)],
+      date: createDate(100),
+    };
+    commentsArray.push(comment);
+  }
+
+  return commentsArray;
+};
+
 export default () => {
   const film = {
     title: ALL_FILMS[generateRandomNumber(ALL_FILMS.length)],
+    titleOriginal: ALL_FILMS[generateRandomNumber(ALL_FILMS.length)],
+    age: generateRandomNumber(MAX_AGE_LIMIT),
+    director: PEOPLE[generateRandomNumber(PEOPLE.length)],
+    writers: getArrayOfUniqueValues(generateRandomNumber(MAX_NUMBER_MEN) + 1, PEOPLE),
+    actors: getArrayOfUniqueValues(generateRandomNumber(MAX_NUMBER_MEN) + 1, PEOPLE),
+    releaseDate: createDate(1000),
+    country: COUNTRYS[generateRandomNumber(COUNTRYS.length)],
     rating: generateRandomNumber(100) / 10,
-    year: currentDate.getFullYear() - generateRandomNumber(40),
     duration: generateRandomNumber(40) + 90,
-    genre: ALL_GENRE[generateRandomNumber(ALL_GENRE.length)],
+    genre: getArrayOfUniqueValues(generateRandomNumber(2) + 1, ALL_GENRE),
     poster: ALL_POSTERS[generateRandomNumber(ALL_POSTERS.length)],
     description: createDescription(),
-    comments: getArrayOfUniqueValues(generateRandomNumber(allComments.length), allComments),
+    comments: createComments(generateRandomNumber(allComments.length)),
   };
+
   return film;
 };

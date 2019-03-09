@@ -1,70 +1,75 @@
-import makeFilter from './make-filter.js';
-import makeCard from './make-card.js';
-import generateData from './data.js';
+import generateDataCard from './data-card.js';
+import generateDataFilter from './data-filter';
+import Card from './card';
+import CardPopup from './card-popup';
+import Filter from './filter';
 
 const FILTERS = [`Favorites`, `History`, `Watchlist`, `All movies`];
 const START_QUANTITY_CARDS = 7;
 const QUANTITY_CARDS_OF_FILM_LIST_EXTRA = 2;
-const MAX_CARDS = 10;
 
 const filmsListContainerMain = document.querySelector(`.films-list .films-list__container`);
 const filmsListContainer = document.querySelectorAll(`.films-list--extra .films-list__container`);
-let arrayCards = [];
+const filmPopupContainer = document.querySelector(`body`);
+const filtersContainer = document.querySelector(`.main-navigation`);
 
-const generateRandomNumber = (maxNumber) => {
-  return Math.floor(Math.random() * maxNumber);
-};
-
-const onFilterClick = (evt) => {
-
-  const mainNavigationItemActive = document.querySelector(`.main-navigation__item--active`);
-  if (mainNavigationItemActive) {
-    mainNavigationItemActive.classList.remove(`main-navigation__item--active`);
+const createFilter = (name) => {
+  const data = generateDataFilter(name);
+  if (name === `All movies`) {
+    data.count = 0;
+    data.active = true;
   }
-  evt.currentTarget.classList.add(`main-navigation__item--active`);
-  filmsListContainerMain.innerHTML = ``;
-  createCards(filmsListContainerMain, generateRandomNumber(MAX_CARDS));
-};
 
-const addHandlerOnFilters = () => {
-  const filterElements = document.querySelectorAll(`.main-navigation__item:not(.main-navigation__item--additional)`);
-  for (const element of filterElements) {
-    element.addEventListener(`click`, onFilterClick);
-  }
+  const filterElement = new Filter(data);
+  filterElement.render(filtersContainer);
+
+  filterElement.onClick = () => {
+    const filterActive = document.querySelector(`.main-navigation__item--active`);
+    if (filterActive) {
+      filterActive.classList.remove(`main-navigation__item--active`);
+    }
+    filterElement.element.classList.add(`main-navigation__item--active`);
+    createCards(filterElement._count);
+  };
 };
 
 const createFilters = () => {
-  for (let i = 0; i < FILTERS.length; i++) {
-    let filterCount = generateRandomNumber(MAX_CARDS);
-    let active = `false`;
-    if (i === (FILTERS.length - 1)) {
-      active = `true`;
-      filterCount = 0;
-    }
-    makeFilter(FILTERS[i], filterCount, active);
+  for (const element of FILTERS) {
+    createFilter(element);
   }
 };
 
-const createCards = (block, number) => {
-  arrayCards = [];
+const createCard = (block) => {
+  const data = generateDataCard();
+
+  const cardElement = new Card(data, block);
+  const cardPopup = new CardPopup(data);
+
+  cardElement.render(block);
+
+  cardElement.onClick = () => {
+    cardPopup.render(filmPopupContainer);
+  };
+
+  cardPopup.onClick = () => {
+    cardPopup.unrender();
+  };
+};
+
+const createCards = (number) => {
+  filmsListContainerMain.innerHTML = ``;
   for (let i = 0; i < number; i++) {
-    arrayCards.push(generateData());
+    createCard(filmsListContainerMain);
   }
 
-  for (const element of arrayCards) {
-    makeCard(block, element);
-  }
-};
-
-const fillListExtra = () => {
+  // отрисовать карточки в допконтейнерах
   for (const element of filmsListContainer) {
+    element.innerHTML = ``;
     for (let i = 0; i < QUANTITY_CARDS_OF_FILM_LIST_EXTRA; i++) {
-      makeCard(element, arrayCards[generateRandomNumber(arrayCards.length)]);
+      createCard(element);
     }
   }
 };
 
 createFilters();
-createCards(filmsListContainerMain, START_QUANTITY_CARDS);
-fillListExtra();
-addHandlerOnFilters();
+createCards(START_QUANTITY_CARDS);
