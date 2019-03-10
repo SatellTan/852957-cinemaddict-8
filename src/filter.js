@@ -1,5 +1,5 @@
 import Component from './component';
-import createElementBeginningContainer from './create-element-beginning-container';
+import createElement from './create-element';
 
 export default class Filter extends Component {
   constructor(data) {
@@ -34,7 +34,7 @@ export default class Filter extends Component {
   }
 
   render(container) {
-    this._element = createElementBeginningContainer(this.template, container);
+    this._element = createElement(this.template, container, `afterbegin`);
     this.bind();
     return this._element;
   }

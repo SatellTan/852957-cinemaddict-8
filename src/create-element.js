@@ -1,6 +1,11 @@
-export default (template, container) => {
+export default (template, container, position = `beforeend`) => {
 
-  container.insertAdjacentHTML(`beforeend`, template);
+  container.insertAdjacentHTML(position, template);
 
-  return container.lastChild;
+  if (position === `beforeend`) {
+    return container.lastChild;
+  } else {
+    return container.firstChild;
+  }
+
 };

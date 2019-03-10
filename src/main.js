@@ -54,6 +54,10 @@ const createCard = (block) => {
   cardPopup.onClick = () => {
     cardPopup.unrender();
   };
+
+  cardPopup.onEscPress = () => {
+    cardPopup.unrender();
+  };
 };
 
 const createCards = (number) => {

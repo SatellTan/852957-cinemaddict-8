@@ -1,5 +1,7 @@
 import Component from './component';
 
+const ESC_KEYCODE = 27;
+
 export default class Card extends Component {
   constructor(data) {
     super();
@@ -19,7 +21,16 @@ export default class Card extends Component {
     this._comments = data.comments;
     this._element = null;
     this._onClick = null;
-    this._listener = null;
+    this._listenerClick = null;
+    this._onEscPress = null;
+    this._listenerEsc = null;
+  }
+
+  _onEscPress(evt) {
+    evt.preventDefault();
+    if (evt.keyCode === ESC_KEYCODE && typeof this._onEscPress === `function`) {
+      this._onEscPress();
+    }
   }
 
   _onCardPopupClick(evt) {
@@ -35,6 +46,10 @@ export default class Card extends Component {
 
   set onClick(fn) {
     this._onClick = fn;
+  }
+
+  set onEscPress(fn) {
+    this._onEscPress = fn;
   }
 
   get template() {
@@ -188,12 +203,18 @@ export default class Card extends Component {
   }
 
   bind() {
-    this._listener = this._onCardPopupClick.bind(this);
-    this._element.querySelector(`.film-details__close-btn`).addEventListener(`click`, this._listener);
+    this._listenerClick = this._onCardPopupClick.bind(this);
+    this._element.querySelector(`.film-details__close-btn`).addEventListener(`click`, this._listenerClick);
+
+    this._listenerEsc = this._onEscPress.bind(this);
+    this._element.parentNode.addEventListener(`keydown`, this._listenerEsc);
   }
 
   unbind() {
-    this._element.querySelector(`.film-details__close-btn`).removeEventListener(`click`, this._listener);
-    this._listener = null;
+    this._element.querySelector(`.film-details__close-btn`).removeEventListener(`click`, this._listenerClick);
+    this._listenerClick = null;
+
+    this._element.parentNode.removeEventListener(`keydown`, this._listenerEsc);
+    this._listenerEsc = null;
   }
 }
