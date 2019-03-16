@@ -1,3 +1,4 @@
+import moment from 'moment';
 import Component from './component';
 
 export default class Card extends Component {
@@ -10,16 +11,25 @@ export default class Card extends Component {
     this._description = data.description;
     this._genre = data.genre;
     this._poster = data.poster;
-    this._comments = data.comments;
+    this._comments = data.comments.slice();
+    this._ownRating = data.ownRating;
     this._block = block;
     this._element = null;
     this._onClick = null;
     this._listener = null;
   }
 
+  _partialUpdate() {
+    this._element.innerHTML = this.template;
+    const newElement = this._element.parentElement.insertBefore(this._element.firstChild, this._element);
+    this._element.remove();
+    this._element = newElement;
+  }
+
   _onCardClick(evt) {
     evt.preventDefault();
     if (typeof this._onClick === `function`) {
+      this._element.querySelector(`.film-card__comments`).blur();
       this._onClick();
     }
   }
@@ -33,9 +43,6 @@ export default class Card extends Component {
   }
 
   get template() {
-
-    const durationInHour = Math.trunc(this._duration / 60);
-    const durationInMinutes = this._duration - durationInHour * 60;
 
     let descriptionBlock = ``;
     let controlsBlock = ``;
@@ -54,8 +61,8 @@ export default class Card extends Component {
       <h3 class="film-card__title">${this._title}</h3>
       <p class="film-card__rating">${this._rating}</p>
       <p class="film-card__info">
-        <span class="film-card__year">${this._releaseDate.getFullYear()}</span>
-        <span class="film-card__duration">${durationInHour}h&nbsp;${durationInMinutes}m</span>
+        <span class="film-card__year">${moment(this._releaseDate).format(`YYYY`)}</span>
+        <span class="film-card__duration">${moment(this._duration).utc().format(`h [h] m [min]`)}</span>
         <span class="film-card__genre">${this._genre.join(`, `)}</span>
       </p>
       <img src="${this._poster}" alt="" class="film-card__poster">
@@ -72,6 +79,13 @@ export default class Card extends Component {
 
   unbind() {
     this._element.querySelector(`.film-card__comments`).removeEventListener(`click`, this._listener);
-    this._listener = null;
+  }
+
+  update(data) {
+    this._comments = data.comments.slice();
+    this._ownRating = data.ownRating;
+    this.unbind();
+    this._partialUpdate();
+    this.bind();
   }
 }

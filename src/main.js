@@ -51,7 +51,14 @@ const createCard = (block) => {
     cardPopup.render(filmPopupContainer);
   };
 
-  cardPopup.onClick = () => {
+  cardPopup.onClick = (newData) => {
+    if (Object.keys(newData.comment).length) {
+      data.comments.push(newData.comment);
+    }
+    data.ownRating = newData.score;
+
+    cardElement.update(data);
+    cardPopup.update(data);
     cardPopup.unrender();
   };
 

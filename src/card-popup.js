@@ -1,8 +1,10 @@
+import moment from 'moment';
 import Component from './component';
+import {EMOJI} from './data-card';
 
 const ESC_KEYCODE = 27;
 
-export default class Card extends Component {
+export default class CardPopup extends Component {
   constructor(data) {
     super();
     this._title = data.title;
@@ -18,7 +20,8 @@ export default class Card extends Component {
     this._description = data.description;
     this._genre = data.genre;
     this._poster = data.poster;
-    this._comments = data.comments;
+    this._comments = data.comments.slice();
+    this._ownRating = data.ownRating;
     this._element = null;
     this._onClick = null;
     this._listenerClick = null;
@@ -26,17 +29,37 @@ export default class Card extends Component {
     this._listenerEsc = null;
   }
 
-  _onEscPress(evt) {
-    evt.preventDefault();
-    if (evt.keyCode === ESC_KEYCODE && typeof this._onEscPress === `function`) {
-      this._onEscPress();
+  _processForm(formData) {
+    const entry = {
+      comment: {},
+      score: ``,
+    };
+    const cardPopupMapper = CardPopup.createMapper(entry);
+
+    for (const pair of formData.entries()) {
+      const [property, value] = pair;
+      if (cardPopupMapper[property]) {
+        cardPopupMapper[property](value);
+      }
     }
+
+    return entry;
   }
 
   _onCardPopupClick(evt) {
     evt.preventDefault();
+    const formData = new FormData(this._element.querySelector(`.film-details__inner`));
+    const newData = this._processForm(formData);
+
     if (typeof this._onClick === `function`) {
-      this._onClick();
+      this._onClick(newData);
+    }
+  }
+
+  _onCardPopupEscPress(evt) {
+    if ((evt.keyCode === ESC_KEYCODE) && (typeof this._onEscPress === `function`)) {
+      evt.preventDefault();
+      this._onEscPress();
     }
   }
 
@@ -54,10 +77,16 @@ export default class Card extends Component {
 
   get template() {
 
-    let rating = ``;
+    let ratingBlock = ``;
     for (let i = 1; i < 10; i++) {
-      rating += `<input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="${i}" id="rating-${i}" ${i === 5 ? `checked` : ``}>
+      ratingBlock += `<input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="${i}" id="rating-${i}" ${+this._ownRating === i ? `checked` : ``}>
       <label class="film-details__user-rating-label" for="rating-${i}">${i}</label>`;
+    }
+
+    let emojisBlock = ``;
+    for (const iterator of Object.keys(EMOJI)) {
+      emojisBlock += `<input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-${iterator}" value="${iterator}" ${iterator === `neutral-face` ? `checked` : ``}>
+      <label class="film-details__emoji-label" for="emoji-${iterator}">${EMOJI[iterator]}</label>`;
     }
 
     return `
@@ -101,11 +130,11 @@ export default class Card extends Component {
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Release Date</td>
-                <td class="film-details__cell">${this._releaseDate.getDate()} ${this._releaseDate.toLocaleString(`en-us`, {month: `long`})} ${this._releaseDate.getFullYear()} (${this._country})</td>
+                <td class="film-details__cell">${moment(this._releaseDate).format(`D MMMM YYYY`)} (${this._country})</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Runtime</td>
-                <td class="film-details__cell">${this._duration} min</td>
+                <td class="film-details__cell">${moment(this._duration).utc().format(`h [h] m [min]`)}</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Country</td>
@@ -148,7 +177,7 @@ export default class Card extends Component {
                 <p class="film-details__comment-text"${comment.text}</p>
                 <p class="film-details__comment-info">
                   <span class="film-details__comment-author">${comment.author}</span>
-                  <span class="film-details__comment-day">${comment.date.getDate()} ${comment.date.toLocaleString(`en-us`, {month: `long`})} ${comment.date.getFullYear()}</span>
+                  <span class="film-details__comment-day">${moment(comment.date).format(`D MMMM YYYY`)}</span>
                 </p>
               </div>
             </li>`.trim()))).join(``)}
@@ -160,14 +189,7 @@ export default class Card extends Component {
               <input type="checkbox" class="film-details__add-emoji visually-hidden" id="add-emoji">
 
               <div class="film-details__emoji-list">
-                <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-sleeping" value="sleeping">
-                <label class="film-details__emoji-label" for="emoji-sleeping">😴</label>
-
-                <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-neutral-face" value="neutral-face" checked>
-                <label class="film-details__emoji-label" for="emoji-neutral-face">😐</label>
-
-                <input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-grinning" value="grinning">
-                <label class="film-details__emoji-label" for="emoji-grinning">😀</label>
+                ${emojisBlock}
               </div>
             </div>
             <label class="film-details__comment-label">
@@ -193,7 +215,7 @@ export default class Card extends Component {
               <p class="film-details__user-rating-feelings">How you feel it?</p>
 
               <div class="film-details__user-rating-score">
-                ${rating}
+                ${ratingBlock}
               </div>
             </section>
           </div>
@@ -206,15 +228,45 @@ export default class Card extends Component {
     this._listenerClick = this._onCardPopupClick.bind(this);
     this._element.querySelector(`.film-details__close-btn`).addEventListener(`click`, this._listenerClick);
 
-    this._listenerEsc = this._onEscPress.bind(this);
+    this._listenerEsc = this._onCardPopupEscPress.bind(this);
     this._element.parentNode.addEventListener(`keydown`, this._listenerEsc);
   }
 
   unbind() {
     this._element.querySelector(`.film-details__close-btn`).removeEventListener(`click`, this._listenerClick);
-    this._listenerClick = null;
-
     this._element.parentNode.removeEventListener(`keydown`, this._listenerEsc);
-    this._listenerEsc = null;
   }
+
+  update(data) {
+    this._comments = data.comments.slice();
+    this._ownRating = data.ownRating;
+  }
+
+  static createMapper(target) {
+    const addNewComment = (value) => {
+      if (value) {
+        const newComment = {
+          emoji: EMOJI[document.querySelector(`.film-details__emoji-item:checked`).value],
+          text: value,
+          author: `Me`,
+          date: new Date(),
+        };
+        target.comment = newComment;
+      }
+    };
+
+    return {
+      comment: (value) => {
+        if (value) {
+          addNewComment(value);
+        }
+      },
+      score: (value) => {
+        if (value) {
+          target.score = value;
+        }
+      },
+    };
+  }
+
 }

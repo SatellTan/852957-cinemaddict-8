@@ -60,7 +60,11 @@ const PEOPLE = [
   `Steven Spielberg`,
 ];
 
-const EMOJI = [`😴`, `😐`, `😀`];
+export const EMOJI = {
+  "sleeping": `😴`,
+  "neutral-face": `😐`,
+  "grinning": `😀`,
+};
 
 const MAX_SENTENCES_IN_DESCRIPTION = 4;
 const MAX_AGE_LIMIT = 18;
@@ -112,9 +116,10 @@ const createDate = (number) => {
 const createComments = (number) => {
   const textCommentsArray = getArrayOfUniqueValues(number, allComments);
   const commentsArray = [];
+  const emojiKeys = Object.keys(EMOJI);
   for (const element of textCommentsArray) {
     const comment = {
-      emoji: EMOJI[generateRandomNumber(EMOJI.length)],
+      emoji: EMOJI[emojiKeys[generateRandomNumber(emojiKeys.length)]],
       text: element,
       author: PEOPLE[generateRandomNumber(PEOPLE.length)],
       date: createDate(100),
@@ -136,11 +141,12 @@ export default () => {
     releaseDate: createDate(1000),
     country: COUNTRYS[generateRandomNumber(COUNTRYS.length)],
     rating: generateRandomNumber(100) / 10,
-    duration: generateRandomNumber(40) + 90,
+    duration: (generateRandomNumber(40) + 90) * 60 * 1000,
     genre: getArrayOfUniqueValues(generateRandomNumber(2) + 1, ALL_GENRE),
     poster: ALL_POSTERS[generateRandomNumber(ALL_POSTERS.length)],
     description: createDescription(),
     comments: createComments(generateRandomNumber(allComments.length)),
+    ownRating: 0,
   };
 
   return film;

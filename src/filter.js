@@ -46,6 +46,10 @@ export default class Filter extends Component {
 
   unbind() {
     this._element.addEvenetListener(`click`, this._listener);
-    this._listener = null;
+  }
+
+  update(data) {
+    this._name = data.name;
+    this._count = data.count;
   }
 }
