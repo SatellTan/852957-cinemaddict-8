@@ -12,7 +12,7 @@ export default class Card extends Component {
     this._genre = data.genre;
     this._poster = data.poster;
     this._comments = data.comments.slice();
-    this._ownRating = data.ownRating;
+    //this._ownRating = data.ownRating;
     this._block = block;
     this._element = null;
     this._onClick = null;
@@ -83,7 +83,7 @@ export default class Card extends Component {
 
   update(data) {
     this._comments = data.comments.slice();
-    this._ownRating = data.ownRating;
+    //this._ownRating = data.ownRating;
     this.unbind();
     this._partialUpdate();
     this.bind();

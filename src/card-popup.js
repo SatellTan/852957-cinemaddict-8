@@ -22,6 +22,9 @@ export default class CardPopup extends Component {
     this._poster = data.poster;
     this._comments = data.comments.slice();
     this._ownRating = data.ownRating;
+    this._watchlist = data.watchlist;
+    this._watched = data.watched;
+    this._favorite = data.favorite;
     this._element = null;
     this._onClick = null;
     this._listenerClick = null;
@@ -33,6 +36,9 @@ export default class CardPopup extends Component {
     const entry = {
       comment: {},
       score: ``,
+      watchlist: ``,
+      watched: ``,
+      favorite: ``,
     };
     const cardPopupMapper = CardPopup.createMapper(entry);
 
@@ -111,7 +117,7 @@ export default class CardPopup extends Component {
 
               <div class="film-details__rating">
                 <p class="film-details__total-rating">${this._rating}</p>
-                <p class="film-details__user-rating">Your rate 8</p>
+                <p class="film-details__user-rating">Your rate ${this._ownRating}</p>
               </div>
             </div>
 
@@ -134,7 +140,7 @@ export default class CardPopup extends Component {
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Runtime</td>
-                <td class="film-details__cell">${moment(this._duration).utc().format(`h [h] m [min]`)}</td>
+                <td class="film-details__cell">${moment.duration(this._duration,"milliseconds").asMinutes()} min</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Country</td>
@@ -156,13 +162,13 @@ export default class CardPopup extends Component {
         </div>
 
         <section class="film-details__controls">
-          <input type="checkbox" class="film-details__control-input visually-hidden" id="watchlist" name="watchlist">
+          <input type="checkbox" class="film-details__control-input visually-hidden" id="watchlist" name="watchlist" ${this._watchlist ? `checked` :``}>
           <label for="watchlist" class="film-details__control-label film-details__control-label--watchlist">Add to watchlist</label>
 
-          <input type="checkbox" class="film-details__control-input visually-hidden" id="watched" name="watched" checked>
+          <input type="checkbox" class="film-details__control-input visually-hidden" id="watched" name="watched" ${this._watched ? `checked` :``}>
           <label for="watched" class="film-details__control-label film-details__control-label--watched">Already watched</label>
 
-          <input type="checkbox" class="film-details__control-input visually-hidden" id="favorite" name="favorite">
+          <input type="checkbox" class="film-details__control-input visually-hidden" id="favorite" name="favorite" ${this._favorite ? `checked` :``}>
           <label for="favorite" class="film-details__control-label film-details__control-label--favorite">Add to favorites</label>
         </section>
 
@@ -200,7 +206,7 @@ export default class CardPopup extends Component {
 
         <section class="film-details__user-rating-wrap">
           <div class="film-details__user-rating-controls">
-            <span class="film-details__watched-status film-details__watched-status--active">Already watched</span>
+            <span class="film-details__watched-status film-details__watched-status--active">${this._watched ? `Already watched` :``}</span>
             <button class="film-details__watched-reset" type="button">undo</button>
           </div>
 
@@ -240,6 +246,9 @@ export default class CardPopup extends Component {
   update(data) {
     this._comments = data.comments.slice();
     this._ownRating = data.ownRating;
+    this._watchlist = data.watchlist;
+    this._watched = data.watched;
+    this._favorite = data.favorite;
   }
 
   static createMapper(target) {
@@ -264,6 +273,21 @@ export default class CardPopup extends Component {
       score: (value) => {
         if (value) {
           target.score = value;
+        }
+      },
+      watchlist: (value) => {
+        if (value) {
+          target.watchlist = value;
+        }
+      },
+      watched: (value) => {
+        if (value) {
+          target.watched = value;
+        }
+      },
+      favorite: (value) => {
+        if (value) {
+          target.favorite = value;
         }
       },
     };

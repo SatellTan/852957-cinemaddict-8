@@ -56,6 +56,9 @@ const createCard = (block) => {
       data.comments.push(newData.comment);
     }
     data.ownRating = newData.score;
+    data.watchlist = newData.watchlist;
+    data.watched = newData.watched;
+    data.favorite = newData.favorite;
 
     cardElement.update(data);
     cardPopup.update(data);

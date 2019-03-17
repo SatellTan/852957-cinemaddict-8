@@ -147,6 +147,9 @@ export default () => {
     description: createDescription(),
     comments: createComments(generateRandomNumber(allComments.length)),
     ownRating: 0,
+    watchlist: false,
+    watched: false,
+    favorite: false,
   };
 
   return film;
