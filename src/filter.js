@@ -15,8 +15,7 @@ export default class Filter extends Component {
     return this._element;
   }
 
-  _onFilterClick(evt) {
-    evt.preventDefault();
+  _onFilterClick() {
     if (typeof this._onClick === `function`) {
       this._onClick();
     }
@@ -48,8 +47,7 @@ export default class Filter extends Component {
     this._element.addEvenetListener(`click`, this._listener);
   }
 
-  update(data) {
-    this._name = data.name;
+  /* update(data) {
     this._count = data.count;
-  }
+  } */
 }

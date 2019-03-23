@@ -3,6 +3,7 @@ import Component from './component';
 import {EMOJI} from './data-card';
 
 const ESC_KEYCODE = 27;
+const ENTER_KEYCODE = 13;
 
 export default class CardPopup extends Component {
   constructor(data) {
@@ -26,10 +27,17 @@ export default class CardPopup extends Component {
     this._watched = data.watched;
     this._favorite = data.favorite;
     this._element = null;
-    this._onClick = null;
-    this._listenerClick = null;
+    this._onClickCloseBtn = null;
+    this._listenerClickCloseBtn = null;
     this._onEscPress = null;
-    this._listenerEsc = null;
+    this._onAddComment = null;
+    this._listenerKeyDown = null;
+    this._onAddToWatchList = null;
+    this._listenerClickAddToWatchlistBtn = null;
+    this._onMarkAsWatched = null;
+    this._listenerClickMarkAsWatchedBtn = null;
+    this._onFavorite = null;
+    this._listenerClickFavoriteBtn = null;
   }
 
   _processForm(formData) {
@@ -52,20 +60,58 @@ export default class CardPopup extends Component {
     return entry;
   }
 
-  _onCardPopupClick(evt) {
-    evt.preventDefault();
+  _toGetFormDate() {
     const formData = new FormData(this._element.querySelector(`.film-details__inner`));
-    const newData = this._processForm(formData);
+    return this._processForm(formData);
+  }
 
-    if (typeof this._onClick === `function`) {
-      this._onClick(newData);
+  _onCardPopupClickCloseBtn(evt) {
+    evt.preventDefault();
+    const newData = this._toGetFormDate();
+
+    if (typeof this._onClickCloseBtn === `function`) {
+      this._onClickCloseBtn(newData);
     }
   }
 
-  _onCardPopupEscPress(evt) {
+  _onCardPopupKeyDown(evt) {
     if ((evt.keyCode === ESC_KEYCODE) && (typeof this._onEscPress === `function`)) {
+
       evt.preventDefault();
       this._onEscPress();
+
+    } else if (evt.ctrlKey && (evt.keyCode === ENTER_KEYCODE)) {
+
+      evt.preventDefault();
+      const newData = this._toGetFormDate();
+
+      if (typeof this._onAddComment === `function`) {
+        this._onAddComment(newData);
+      }
+    }
+  }
+
+  _onCardPopupClickAddToWatchlistBtn() {
+    const newData = this._toGetFormDate();
+
+    if (typeof this._onAddToWatchList === `function`) {
+      this._onAddToWatchList(newData);
+    }
+  }
+
+  _onCardPopupClickMarkAsWatchedBtn() {
+    const newData = this._toGetFormDate();
+
+    if (typeof this._onMarkAsWatched === `function`) {
+      this._onMarkAsWatched(newData);
+    }
+  }
+
+  _onCardPopupClickFavoriteBtn() {
+    const newData = this._toGetFormDate();
+
+    if (typeof this._onFavorite === `function`) {
+      this._onFavorite(newData);
     }
   }
 
@@ -73,12 +119,28 @@ export default class CardPopup extends Component {
     return this._element;
   }
 
-  set onClick(fn) {
-    this._onClick = fn;
+  set onClickCloseBtn(fn) {
+    this._onClickCloseBtn = fn;
   }
 
   set onEscPress(fn) {
     this._onEscPress = fn;
+  }
+
+  set onAddComment(fn) {
+    this._onAddComment = fn;
+  }
+
+  set onAddToWatchList(fn) {
+    this._onAddToWatchList = fn;
+  }
+
+  set onMarkAsWatched(fn) {
+    this._onMarkAsWatched = fn;
+  }
+
+  set onFavorite(fn) {
+    this._onFavorite = fn;
   }
 
   get template() {
@@ -130,7 +192,7 @@ export default class CardPopup extends Component {
                 <td class="film-details__term">Writers</td>
                 <td class="film-details__cell">${this._writers.join(`, `)}</td>
               </tr>
-              <tr class="film-details__row">
+              <tr class="film-details__row">s
                 <td class="film-details__term">Actors</td>
                 <td class="film-details__cell">${this._actors.join(`, `)}</td>
               </tr>
@@ -231,16 +293,28 @@ export default class CardPopup extends Component {
   }
 
   bind() {
-    this._listenerClick = this._onCardPopupClick.bind(this);
-    this._element.querySelector(`.film-details__close-btn`).addEventListener(`click`, this._listenerClick);
+    this._listenerClickCloseBtn = this._onCardPopupClickCloseBtn.bind(this);
+    this._element.querySelector(`.film-details__close-btn`).addEventListener(`click`, this._listenerClickCloseBtn);
 
-    this._listenerEsc = this._onCardPopupEscPress.bind(this);
-    this._element.parentNode.addEventListener(`keydown`, this._listenerEsc);
+    this._listenerKeyDown = this._onCardPopupKeyDown.bind(this);
+    this._element.parentNode.addEventListener(`keydown`, this._listenerKeyDown);
+
+    this._listenerClickAddToWatchlistBtn = this._onCardPopupClickAddToWatchlistBtn.bind(this);
+    this._element.querySelector(`#watchlist`).addEventListener(`click`, this._listenerClickAddToWatchlistBtn);
+
+    this._listenerClickMarkAsWatchedBtn = this._onCardPopupClickMarkAsWatchedBtn.bind(this);
+    this._element.querySelector(`#watched`).addEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
+
+    this._listenerClickFavoriteBtn = this._onCardPopupClickFavoriteBtn.bind(this);
+    this._element.querySelector(`#favorite`).addEventListener(`click`, this._listenerClickFavoriteBtn);
   }
 
   unbind() {
-    this._element.querySelector(`.film-details__close-btn`).removeEventListener(`click`, this._listenerClick);
-    this._element.parentNode.removeEventListener(`keydown`, this._listenerEsc);
+    this._element.querySelector(`.film-details__close-btn`).removeEventListener(`click`, this._listenerClickCloseBtn);
+    this._element.parentNode.removeEventListener(`keydown`, this._listenerKeyDown);
+    this._element.querySelector(`#watchlist`).removeEventListener(`click`, this._listenerClickAddToWatchlistBtn);
+    this._element.querySelector(`#watched`).removeEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
+    this._element.querySelector(`#favorite`).removeEventListener(`click`, this._listenerClickFavoriteBtn);
   }
 
   update(data) {
