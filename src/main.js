@@ -1,13 +1,14 @@
-import generateDataCard from './data-card.js';
 import generateDataFilter from './data-filter';
 import Card from './card';
 import CardPopup from './card-popup';
 import Filter from './filter';
 import displayStatistics from './statistic';
+import API from './api';
 
-const FILTERS = [`Favorites`, `History`, `Watchlist`, `All movies`];
-const START_QUANTITY_CARDS = 7;
+const FILTERS_NAMES = [`Favorites`, `History`, `Watchlist`, `All movies`];
 const QUANTITY_CARDS_OF_FILM_LIST_EXTRA = 2;
+const AUTHORIZATION = `Basic dXNlckBwYXNzd29yZAo=${Math.random()}`;
+const END_POINT = `https://es8-demo-srv.appspot.com/moowle`;
 
 const filmsListContainerMain = document.querySelector(`.films-list .films-list__container`);
 const filmsListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
@@ -16,64 +17,49 @@ const statisticsBlock = document.querySelector(`.statistic`);
 const filmPopupContainer = document.querySelector(`body`);
 const filtersContainer = document.querySelector(`.main-navigation`);
 const statisticBtn = document.querySelector(`.main-navigation__item--additional`);
-const initialCards = [];
-let accessoryArrayCards = [];
-
-const filterCards = (cards, filterName) => {
-  switch (filterName) {
-    case `all movies`:
-      return cards;
-
-    case `watchlist`:
-      return cards.filter((it) => it.watchlist);
-
-    case `history`:
-      return cards.filter((it) => it.watched);
-
-    case `favorites`:
-      return cards.filter((it) => it.favorite);
-
-    default: return cards;
-  }
-};
+let initialCards = [];
+const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
 
 const createFilter = (name) => {
   const data = generateDataFilter(name);
-  if (name === `All movies`) {
-    data.count = 0;
-    data.active = true;
-  } else {
-    const filteredCards = filterCards(initialCards, name.toLowerCase());
-    data.count = filteredCards.length;
-  }
 
   const filterElement = new Filter(data);
   filterElement.render(filtersContainer);
+  const filteredCards = filterElement.toFilter(initialCards, name.toLowerCase());
+  data.count = filteredCards.length;
+  filterElement.update(data);
+  if (filterElement._name === `All movies`) {
+    filterElement.element.classList.add(`main-navigation__item--active`);
+  }
 
   filterElement.onClick = () => {
     const filterActive = document.querySelector(`.main-navigation__item--active`);
     if (filterActive) {
       filterActive.classList.remove(`main-navigation__item--active`);
     }
-    filterElement.element.classList.add(`main-navigation__item--active`);
 
     filmsBlock.classList.remove(`visually-hidden`);
     statisticsBlock.classList.add(`visually-hidden`);
 
-    // createCards(filterElement._count);
-    const filteredCards = filterCards(initialCards, filterElement._name.toLowerCase());
-    filterElement._count = filteredCards.length;
-    renderCards(filteredCards, filmsListContainerMain);
+    filteredCards = filterElement.toFilter(initialCards, filterElement._name.toLowerCase());
+    data.count = filteredCards.length;
+    filterElement.update(data);
+    filterElement.element.classList.add(`main-navigation__item--active`);
+    renderCards(filteredCards, filmsListContainerMain, filters);
   };
+
+  return filterElement;
 };
 
 const createFilters = () => {
-  for (const element of FILTERS) {
-    createFilter(element);
-  }
+  return FILTERS_NAMES.map((element)=>createFilter(element));
 };
 
-const renderCards = (cards, block) => {
+const renderCards = (cards, block, filters) => {
+  if (!initialCards.length) {
+    initialCards = cards.slice(0);
+  }
+
   block.innerHTML = ``;
 
   for (let i = 0; i < cards.length; i++) {
@@ -92,59 +78,80 @@ const renderCards = (cards, block) => {
       cardElement.update(data);
       cardPopup.update(data);
       cardPopup.unrender();
-
-      /* const filterActive = document.querySelector(`.main-navigation__item--active`);
-      if (filterActive.textContent.toLowerCase() !== `all movies`) {
-        const filteredCards = filterCards(initialCards, filterElement._name.toLowerCase());
-        filterElement._count = filteredCards.length; //нужно найти экземпляр класса и обновить счетчик
-        renderCards(filteredCards, filmsListContainerMain);
-      } */
+      //updateFilters(filters);
+      for (let element of filters) {
+        const filteredCards = element.toFilter(initialCards, element._name.toLowerCase());
+        let dataFilter = {
+          name: element._name,
+          count: filteredCards.length,
+        };
+        element.update(dataFilter);
+        const filterActive = document.querySelector(`.main-navigation__item--active`);
+        if (element._element === filterActive) {
+          renderCards(filteredCards, filmsListContainerMain, filters);
+        }
+      }
     };
 
     cardPopup.onAddComment = (newData) => {
       if (Object.keys(newData.comment).length) {
         data.comments.push(newData.comment);
       }
+      cardPopup.update(data);
+      cardPopup.showNewComment();
       toFillFilmsListsExtra(2);
     };
 
     cardPopup.onAddToWatchList = (newData) => {
       data.watchlist = newData.watchlist;
-      // обновление фильтра
     };
 
     cardPopup.onMarkAsWatched = (newData) => {
       data.watched = newData.watched;
-      // обновление фильтра
     };
 
     cardPopup.onFavorite = (newData) => {
       data.favorite = newData.favorite;
-      // обновление фильтра
     };
 
     cardPopup.onEscPress = () => {
       cardPopup.unrender();
     };
   }
-};
+  debugger
+  //updateFilters(filters);
 
-const createInitialCards = (number) => {
-  for (let i = 0; i < number; i++) {
-    initialCards.push(generateDataCard());
+
+  if (block === filmsListContainerMain) {
+    toFillFilmsListsExtra(1);
+    toFillFilmsListsExtra(2);
   }
 };
 
 const toFillFilmsListsExtra = (numberOfContainer) => {
   // отрисовать карточки в допконтейнерах
-  accessoryArrayCards = initialCards.slice(0);
-
+  const accessoryArrayCards = initialCards.slice(0);
   if (numberOfContainer === 1) {
     accessoryArrayCards.sort((prev, next) => next.rating - prev.rating);
   } else if (numberOfContainer === 2) {
     accessoryArrayCards.sort((prev, next) => next.comments.length - prev.comments.length);
   }
-  renderCards(accessoryArrayCards.slice(0, QUANTITY_CARDS_OF_FILM_LIST_EXTRA), filmsListExtraContainers[numberOfContainer - 1]);
+  renderCards(accessoryArrayCards.slice(0, QUANTITY_CARDS_OF_FILM_LIST_EXTRA), filmsListExtraContainers[numberOfContainer - 1], filters);
+};
+
+const updateFilters = (filters) => {
+  for (let element of filters) {
+    const filteredCards = element.toFilter(initialCards, element._name.toLowerCase());
+    let dataFilter = {
+      name: element._name,
+      count: filteredCards.length,
+    };
+    element.update(dataFilter);
+    const filterActive = document.querySelector(`.main-navigation__item--active`);
+    if (element._element === filterActive) {
+      renderCards(filteredCards, filmsListContainerMain, filters);
+    }
+  }
 };
 
 const listenerClickStatisticBtn = () => {
@@ -153,9 +160,10 @@ const listenerClickStatisticBtn = () => {
   displayStatistics(initialCards);
 };
 
-createInitialCards(START_QUANTITY_CARDS);
-createFilters();
+const filters = createFilters();
 statisticBtn.addEventListener(`click`, listenerClickStatisticBtn);
-renderCards(initialCards, filmsListContainerMain);
-toFillFilmsListsExtra(1);
-toFillFilmsListsExtra(2);
+
+api.getCards()
+  .then((cards) => {
+    renderCards(cards, filmsListContainerMain, filters);
+  });

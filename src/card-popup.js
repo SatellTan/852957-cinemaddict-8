@@ -1,9 +1,11 @@
 import moment from 'moment';
 import Component from './component';
-import {EMOJI} from './data-card';
+import {EMOJIS} from './data-card';
 
 const ESC_KEYCODE = 27;
 const ENTER_KEYCODE = 13;
+
+const momentDurationFormatSetup = require(`moment-duration-format`);
 
 export default class CardPopup extends Component {
   constructor(data) {
@@ -147,14 +149,14 @@ export default class CardPopup extends Component {
 
     let ratingBlock = ``;
     for (let i = 1; i < 10; i++) {
-      ratingBlock += `<input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="${i}" id="rating-${i}" ${+this._ownRating === i ? `checked` : ``}>
+      ratingBlock += `<input type="radio" name="score" class="film-details__user-rating-input visually-hidden" value="${i}" id="rating-${i}" ${Math.floor(+this._ownRating) === i ? `checked` : ``}>
       <label class="film-details__user-rating-label" for="rating-${i}">${i}</label>`;
     }
 
     let emojisBlock = ``;
-    for (const iterator of Object.keys(EMOJI)) {
+    for (const iterator of Object.keys(EMOJIS)) {
       emojisBlock += `<input class="film-details__emoji-item visually-hidden" name="comment-emoji" type="radio" id="emoji-${iterator}" value="${iterator}" ${iterator === `neutral-face` ? `checked` : ``}>
-      <label class="film-details__emoji-label" for="emoji-${iterator}">${EMOJI[iterator]}</label>`;
+      <label class="film-details__emoji-label" for="emoji-${iterator}">${EMOJIS[iterator]}</label>`;
     }
 
     return `
@@ -192,7 +194,7 @@ export default class CardPopup extends Component {
                 <td class="film-details__term">Writers</td>
                 <td class="film-details__cell">${this._writers.join(`, `)}</td>
               </tr>
-              <tr class="film-details__row">s
+              <tr class="film-details__row">
                 <td class="film-details__term">Actors</td>
                 <td class="film-details__cell">${this._actors.join(`, `)}</td>
               </tr>
@@ -202,7 +204,7 @@ export default class CardPopup extends Component {
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Runtime</td>
-                <td class="film-details__cell">${moment.duration(this._duration, `milliseconds`).asMinutes()} min</td>
+                <td class="film-details__cell">${moment.duration(this._duration, `minutes`).format(`m [min]`)}</td>
               </tr>
               <tr class="film-details__row">
                 <td class="film-details__term">Country</td>
@@ -240,9 +242,9 @@ export default class CardPopup extends Component {
           <ul class="film-details__comments-list">
             ${(Array.from(this._comments).map((comment) => (`
             <li class="film-details__comment">
-              <span class="film-details__comment-emoji">${comment.emoji}</span>
+              <span class="film-details__comment-emoji">${EMOJIS[comment.emotion]}</span>
               <div>
-                <p class="film-details__comment-text"${comment.text}</p>
+                <p class="film-details__comment-text">${comment.comment}</p>
                 <p class="film-details__comment-info">
                   <span class="film-details__comment-author">${comment.author}</span>
                   <span class="film-details__comment-day">${moment(comment.date).format(`D MMMM YYYY`)}</span>
@@ -325,12 +327,28 @@ export default class CardPopup extends Component {
     this._favorite = data.favorite;
   }
 
+  showNewComment() {
+    const commentsBlock = this._element.querySelector(`.film-details__comments-list`);
+    commentsBlock.innerHTML = `${(Array.from(this._comments).map((comment) => (`
+    <li class="film-details__comment">
+      <span class="film-details__comment-emoji">${comment.emotion}</span>
+      <div>
+        <p class="film-details__comment-text">${comment.comment}</p>
+        <p class="film-details__comment-info">
+          <span class="film-details__comment-author">${comment.author}</span>
+          <span class="film-details__comment-day">${moment(comment.date).format(`D MMMM YYYY`)}</span>
+        </p>
+      </div>
+    </li>`.trim()))).join(``)}`;
+    commentsBlock.previousElementSibling.innerHTML = `<h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${this._comments.length}</span></h3>`;
+  }
+
   static createMapper(target) {
     const addNewComment = (value) => {
       if (value) {
         const newComment = {
-          emoji: EMOJI[document.querySelector(`.film-details__emoji-item:checked`).value],
-          text: value,
+          emotion: EMOJIS[document.querySelector(`.film-details__emoji-item:checked`).value],
+          comment: value,
           author: `Me`,
           date: new Date(),
         };

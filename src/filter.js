@@ -6,9 +6,17 @@ export default class Filter extends Component {
     super();
     this._name = data.name;
     this._count = data.count;
-    this._active = data.active;
     this._onClick = null;
     this._listener = null;
+  }
+
+  _partialUpdate() {
+    if (this._count) {
+      this._element.innerHTML = `${this._name}<span class="main-navigation__item-count">${this._count}</span>`;
+    }
+    else {
+      this._element.innerHTML = `${this._name}`;
+    }
   }
 
   get element() {
@@ -27,7 +35,7 @@ export default class Filter extends Component {
 
   get template() {
     return `
-    <a href="#${this._name.toLowerCase()}" class="main-navigation__item${this._active ? ` main-navigation__item--active` : ``}">${this._name}
+    <a href="#${this._name.toLowerCase()}" class="main-navigation__item">${this._name}
     ${this._count !== 0 ? `<span class="main-navigation__item-count">${this._count}</span>` : ``}</a>
     `.trim();
   }
@@ -47,7 +55,27 @@ export default class Filter extends Component {
     this._element.addEvenetListener(`click`, this._listener);
   }
 
-  /* update(data) {
+  update(data) {
     this._count = data.count;
-  } */
+    this._partialUpdate();
+  }
+
+  toFilter(cards, filterName) {
+
+    switch (filterName) {
+      case `all movies`:
+        return cards;
+
+      case `watchlist`:
+        return cards.filter((it) => it.watchlist);
+
+      case `history`:
+        return cards.filter((it) => it.watched);
+
+      case `favorites`:
+        return cards.filter((it) => it.favorite);
+
+      default: return cards;
+    }
+  }
 }

@@ -42,11 +42,11 @@ const getTemplateStatistic = (cards, topGenre) => {
       </li>
       <li class="statistic__text-item">
         <h4 class="statistic__item-title">Total duration</h4>
-        <p class="statistic__item-text">${moment.duration(totalDuration, `milliseconds`).hours()}<span class="statistic__item-description">h</span>${moment.duration(totalDuration, `milliseconds`).minutes()}<span class="statistic__item-description">m</span></p>
+        <p class="statistic__item-text">${moment.duration(totalDuration, `minutes`).hours()}<span class="statistic__item-description">h</span>${moment.duration(totalDuration, `minutes`).minutes()}<span class="statistic__item-description">m</span></p>
       </li>
       <li class="statistic__text-item">
         <h4 class="statistic__item-title">Top genre</h4>
-        <p class="statistic__item-text">${topGenre}</p>
+        <p class="statistic__item-text">${topGenre ? topGenre : ``}</p>
       </li>
     </ul>
 
@@ -59,14 +59,14 @@ const getTemplateStatistic = (cards, topGenre) => {
 const displayChart = (resultGenres) => {
   const statisticCtx = document.querySelector(`.statistic__chart`);
   const BAR_HEIGHT = 50;
-  statisticCtx.height = BAR_HEIGHT * Object.values(resultGenres).length;
+  statisticCtx.height = BAR_HEIGHT * Array.from(resultGenres.values()).length;
   return new Chart(statisticCtx, {
     plugins: [ChartDataLabels],
     type: `horizontalBar`,
     data: {
-      labels: Object.keys(resultGenres),
+      labels: Array.from(resultGenres.keys()),
       datasets: [{
-        data: Object.values(resultGenres),
+        data: Array.from(resultGenres.values()),
         backgroundColor: `#ffe800`,
         hoverBackgroundColor: `#ffe800`,
         anchor: `start`
@@ -124,18 +124,18 @@ export default (cards) => {
   let totalGenres = [];
   if (resultCards.length) {
     totalGenres = resultCards.reduce((a, b) => {
-      return a.concat(b.genre); // a.push(...b.genre);//a.push.apply(a, b.genre);
+      return a.concat(b.genre);
     }, []);
   }
 
-  const resultGenres = totalGenres.reduce(function (acc, el) {
+  let resultGenres = totalGenres.reduce(function (acc, el) {
     acc[el] = (acc[el] || 0) + 1;
     return acc;
   }, {});
 
-  let arrayValues = Object.values(resultGenres);
-  let topGenre = Object.keys(resultGenres)[arrayValues.indexOf(Math.max(...arrayValues))];
+  const arrayGenres = Object.entries(resultGenres).sort((a, b) => b[1] - a[1]);
+  resultGenres = new Map(arrayGenres);
 
-  statisticsBlock.innerHTML = getTemplateStatistic(resultCards, topGenre);
+  statisticsBlock.innerHTML = getTemplateStatistic(resultCards, arrayGenres[0][0]);
   displayChart(resultGenres);
 };

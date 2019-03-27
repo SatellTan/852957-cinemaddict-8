@@ -1,5 +1,8 @@
 import moment from 'moment';
+//import moment-duration-format from 'moment-duration-format';
 import Component from './component';
+const momentDurationFormatSetup = require(`moment-duration-format`);
+//import momentDurationFormat from 'moment-duration-format';
 
 export default class Card extends Component {
   constructor(data, block) {
@@ -61,7 +64,7 @@ export default class Card extends Component {
       <p class="film-card__rating">${this._rating}</p>
       <p class="film-card__info">
         <span class="film-card__year">${moment(this._releaseDate).format(`YYYY`)}</span>
-        <span class="film-card__duration">${moment(this._duration).utc().format(`h [h] m [min]`)}</span>
+        <span class="film-card__duration">${moment.duration(this._duration, `minutes`).format(`h [h] m [min]`)}</span>
         <span class="film-card__genre">${this._genre.join(`, `)}</span>
       </p>
       <img src="${this._poster}" alt="" class="film-card__poster">

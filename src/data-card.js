@@ -60,7 +60,7 @@ const PEOPLE = [
   `Steven Spielberg`,
 ];
 
-export const EMOJI = {
+export const EMOJIS = {
   "sleeping": `😴`,
   "neutral-face": `😐`,
   "grinning": `😀`,
@@ -116,11 +116,11 @@ const createDate = (number) => {
 const createComments = (number) => {
   const textCommentsArray = getArrayOfUniqueValues(number, allComments);
   const commentsArray = [];
-  const emojiKeys = Object.keys(EMOJI);
+  const emojiKeys = Object.keys(EMOJIS);
   for (const element of textCommentsArray) {
     const comment = {
-      emoji: EMOJI[emojiKeys[generateRandomNumber(emojiKeys.length)]],
-      text: element,
+      emotion: EMOJIS[emojiKeys[generateRandomNumber(emojiKeys.length)]],
+      comment: element,
       author: PEOPLE[generateRandomNumber(PEOPLE.length)],
       date: createDate(100),
     };
