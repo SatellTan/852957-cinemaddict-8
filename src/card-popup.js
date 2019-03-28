@@ -5,8 +5,6 @@ import {EMOJIS} from './data-card';
 const ESC_KEYCODE = 27;
 const ENTER_KEYCODE = 13;
 
-const momentDurationFormatSetup = require(`moment-duration-format`);
-
 export default class CardPopup extends Component {
   constructor(data) {
     super();
@@ -327,11 +325,21 @@ export default class CardPopup extends Component {
     this._favorite = data.favorite;
   }
 
+  shake() {
+    const ANIMATION_TIMEOUT = 600;
+    const commentInput = this._element.querySelector(`.film-details__comment-input`);
+    commentInput.style.animation = `shake ${ANIMATION_TIMEOUT / 1000}s`
+
+    setTimeout(() => {
+      commentInput.style.animation = ``
+    }, ANIMATION_TIMEOUT);
+  }
+
   showNewComment() {
     const commentsBlock = this._element.querySelector(`.film-details__comments-list`);
     commentsBlock.innerHTML = `${(Array.from(this._comments).map((comment) => (`
     <li class="film-details__comment">
-      <span class="film-details__comment-emoji">${comment.emotion}</span>
+      <span class="film-details__comment-emoji">${EMOJIS[comment.emotion]}</span>
       <div>
         <p class="film-details__comment-text">${comment.comment}</p>
         <p class="film-details__comment-info">
@@ -347,10 +355,10 @@ export default class CardPopup extends Component {
     const addNewComment = (value) => {
       if (value) {
         const newComment = {
-          emotion: EMOJIS[document.querySelector(`.film-details__emoji-item:checked`).value],
-          comment: value,
           author: `Me`,
+          comment: value,
           date: new Date(),
+          emotion: document.querySelector(`.film-details__emoji-item:checked`).value,
         };
         target.comment = newComment;
       }

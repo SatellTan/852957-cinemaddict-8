@@ -25,7 +25,7 @@ const createFilter = (name) => {
 
   const filterElement = new Filter(data);
   filterElement.render(filtersContainer);
-  const filteredCards = filterElement.toFilter(initialCards, name.toLowerCase());
+  let filteredCards = filterElement.toFilter(initialCards, name.toLowerCase());
   data.count = filteredCards.length;
   filterElement.update(data);
   if (filterElement._name === `All movies`) {
@@ -55,6 +55,21 @@ const createFilters = () => {
   return FILTERS_NAMES.map((element)=>createFilter(element));
 };
 
+const updateFilters = (filters) => {
+  for (let element of filters) {
+    const filteredCards = element.toFilter(initialCards, element._name.toLowerCase());
+    let dataFilter = {
+      name: element._name,
+      count: filteredCards.length,
+    };
+    element.update(dataFilter);
+    const filterActive = document.querySelector(`.main-navigation__item--active`);
+    if (element._element === filterActive) {
+      renderCards(filteredCards, filmsListContainerMain, filters);
+    }
+  }
+};
+
 const renderCards = (cards, block, filters) => {
   if (!initialCards.length) {
     initialCards = cards.slice(0);
@@ -75,31 +90,41 @@ const renderCards = (cards, block, filters) => {
 
     cardPopup.onClickCloseBtn = (newData) => {
       data.ownRating = newData.score;
-      cardElement.update(data);
-      cardPopup.update(data);
-      cardPopup.unrender();
-      //updateFilters(filters);
-      for (let element of filters) {
-        const filteredCards = element.toFilter(initialCards, element._name.toLowerCase());
-        let dataFilter = {
-          name: element._name,
-          count: filteredCards.length,
-        };
-        element.update(dataFilter);
-        const filterActive = document.querySelector(`.main-navigation__item--active`);
-        if (element._element === filterActive) {
-          renderCards(filteredCards, filmsListContainerMain, filters);
-        }
-      }
+
+      api.updateCard({id: data.id, data: data.toRAW()})
+      .then((newCard) => {
+        cardPopup.update(newCard);
+        cardElement.update(newCard);
+        cardPopup.unrender();
+        updateFilters(filters);
+      });
     };
 
     cardPopup.onAddComment = (newData) => {
       if (Object.keys(newData.comment).length) {
         data.comments.push(newData.comment);
       }
-      cardPopup.update(data);
-      cardPopup.showNewComment();
-      toFillFilmsListsExtra(2);
+
+      load(true)
+        .then(() => {
+          //unblock();
+          //taskComponent.update(task);
+          //taskComponent.render();
+          //tasksContainer.replaceChild(taskComponent.element, editTaskComponent.element);
+          //editTaskComponent.unrender();
+      })
+      .catch(() => {
+        cardPopup.shake();
+        //unblock()
+      });
+
+      api.updateCard({id: data.id, data: data.toRAW()})
+      .then((newCard) => {
+        cardPopup.update(newCard);
+        cardElement.update(newCard);
+        cardPopup.showNewComment();
+        toFillFilmsListsExtra(2);
+      });
     };
 
     cardPopup.onAddToWatchList = (newData) => {
@@ -118,9 +143,6 @@ const renderCards = (cards, block, filters) => {
       cardPopup.unrender();
     };
   }
-  debugger
-  //updateFilters(filters);
-
 
   if (block === filmsListContainerMain) {
     toFillFilmsListsExtra(1);
@@ -139,21 +161,6 @@ const toFillFilmsListsExtra = (numberOfContainer) => {
   renderCards(accessoryArrayCards.slice(0, QUANTITY_CARDS_OF_FILM_LIST_EXTRA), filmsListExtraContainers[numberOfContainer - 1], filters);
 };
 
-const updateFilters = (filters) => {
-  for (let element of filters) {
-    const filteredCards = element.toFilter(initialCards, element._name.toLowerCase());
-    let dataFilter = {
-      name: element._name,
-      count: filteredCards.length,
-    };
-    element.update(dataFilter);
-    const filterActive = document.querySelector(`.main-navigation__item--active`);
-    if (element._element === filterActive) {
-      renderCards(filteredCards, filmsListContainerMain, filters);
-    }
-  }
-};
-
 const listenerClickStatisticBtn = () => {
   statisticsBlock.classList.remove(`visually-hidden`);
   filmsBlock.classList.add(`visually-hidden`);
@@ -166,4 +173,11 @@ statisticBtn.addEventListener(`click`, listenerClickStatisticBtn);
 api.getCards()
   .then((cards) => {
     renderCards(cards, filmsListContainerMain, filters);
+    updateFilters(filters);
   });
+
+const load = (isSuccess) => {
+  return new Promise((res, rej) => {
+    setTimeout(isSuccess ? res : rej, 2000)
+  })
+}

@@ -1,8 +1,9 @@
 import moment from 'moment';
-//import moment-duration-format from 'moment-duration-format';
 import Component from './component';
+
 const momentDurationFormatSetup = require(`moment-duration-format`);
-//import momentDurationFormat from 'moment-duration-format';
+
+momentDurationFormatSetup(moment);
 
 export default class Card extends Component {
   constructor(data, block) {
