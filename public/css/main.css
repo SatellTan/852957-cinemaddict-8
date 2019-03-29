@@ -864,5 +864,35 @@ a:hover {
   }
 }
 .shake {
-  animation: shake 0.6s;
+  animation: shake 0.8s;
+}
+
+.preloader {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.85);
+	z-index: 99
+}
+
+.preloader-text {
+	background: #fff;
+	width: 260px;
+	height: 40px;
+	line-height: 40px;
+	border-radius: 8px;
+	font-family: arial;
+	font-size: 15px;
+	color: #111;
+	text-align: center;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+	position: fixed;
+	z-index: 999;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	margin: auto
 }

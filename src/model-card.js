@@ -23,30 +23,30 @@ export default class ModelCard {
 
   toRAW() {
     return {
-      id: this.id,
-      comments: [...this.comments.values()],
-      film_info: {
-        actors: [...this.actors.values()],
-        age_rating: this.age,
-        alternative_title: this.titleOriginal,
-        description: this.description,
-        director: this.director,
-        genre: [...this.genre.values()],
-        poster: this.poster,
-        release: {
-          date: this.releaseDate,
-          release_country: this.country,
+      'id': this.id,
+      'comments': [...this.comments.values()],
+      'film_info': {
+        'actors': [...this.actors.values()],
+        'age_rating': this.age,
+        'alternative_title': this.titleOriginal,
+        'description': this.description,
+        'director': this.director,
+        'genre': [...this.genre.values()],
+        'poster': this.poster,
+        'release': {
+          'date': this.releaseDate,
+          'release_country': this.country,
         },
-        runtime: this.duration,
-        title: this.title,
-        total_rating: this.rating,
-        writers: [...this.writers.values()],
+        'runtime': this.duration,
+        'title': this.title,
+        'total_rating': this.rating,
+        'writers': [...this.writers.values()],
       },
-      user_details: {
-        already_watched: this.watched,
-        favorite: this.favorite,
-        personal_rating: this.ownRating,
-        watchlist: this.watchlist,
+      'user_details': {
+        'already_watched': this.watched,
+        'favorite': this.favorite,
+        'personal_rating': this.ownRating,
+        'watchlist': this.watchlist,
       },
     };
   }
@@ -56,7 +56,6 @@ export default class ModelCard {
   }
 
   static parseCards(data) {
-    console.log(data);
     return data.map(ModelCard.parseCard);
   }
 }

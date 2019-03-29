@@ -63,8 +63,8 @@ export default class API {
     return fetch(`${this._endPoint}/${url}`, {method, body, headers})
       .then(checkStatus)
       .catch((err) => {
-        console.error(`fetch error: ${err}`);
+        // console.error(`fetch error: ${err}`);
         throw err;
       });
   }
-};
+}

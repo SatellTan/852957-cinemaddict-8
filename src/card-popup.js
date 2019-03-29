@@ -325,16 +325,6 @@ export default class CardPopup extends Component {
     this._favorite = data.favorite;
   }
 
-  shake() {
-    const ANIMATION_TIMEOUT = 600;
-    const commentInput = this._element.querySelector(`.film-details__comment-input`);
-    commentInput.style.animation = `shake ${ANIMATION_TIMEOUT / 1000}s`
-
-    setTimeout(() => {
-      commentInput.style.animation = ``
-    }, ANIMATION_TIMEOUT);
-  }
-
   showNewComment() {
     const commentsBlock = this._element.querySelector(`.film-details__comments-list`);
     commentsBlock.innerHTML = `${(Array.from(this._comments).map((comment) => (`

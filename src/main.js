@@ -9,6 +9,8 @@ const FILTERS_NAMES = [`Favorites`, `History`, `Watchlist`, `All movies`];
 const QUANTITY_CARDS_OF_FILM_LIST_EXTRA = 2;
 const AUTHORIZATION = `Basic dXNlckBwYXNzd29yZAo=${Math.random()}`;
 const END_POINT = `https://es8-demo-srv.appspot.com/moowle`;
+const ANIMATION_TIMEOUT = 600;
+const LOAD_ERROR_MASSAGE_TIMEOUT = 6000;
 
 const filmsListContainerMain = document.querySelector(`.films-list .films-list__container`);
 const filmsListExtraContainers = document.querySelectorAll(`.films-list--extra .films-list__container`);
@@ -17,8 +19,18 @@ const statisticsBlock = document.querySelector(`.statistic`);
 const filmPopupContainer = document.querySelector(`body`);
 const filtersContainer = document.querySelector(`.main-navigation`);
 const statisticBtn = document.querySelector(`.main-navigation__item--additional`);
+const loadMessage = document.querySelector(`.preloader`);
+const loadMessageTextContainer = document.querySelector(`.preloader-text`);
 let initialCards = [];
 const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
+
+const shake = (element) => {
+  element.style.animation = `shake ${ANIMATION_TIMEOUT / 1000}s`;
+
+  setTimeout(() => {
+    element.style.animation = ``;
+  }, ANIMATION_TIMEOUT);
+};
 
 const createFilter = (name) => {
   const data = generateDataFilter(name);
@@ -105,25 +117,23 @@ const renderCards = (cards, block, filters) => {
         data.comments.push(newData.comment);
       }
 
-      load(true)
-        .then(() => {
-          //unblock();
-          //taskComponent.update(task);
-          //taskComponent.render();
-          //tasksContainer.replaceChild(taskComponent.element, editTaskComponent.element);
-          //editTaskComponent.unrender();
-      })
-      .catch(() => {
-        cardPopup.shake();
-        //unblock()
-      });
-
+      const commentInput = cardPopup.element.querySelector(`.film-details__comment-input`);
+      commentInput.style.border = `0px solid red`;
+      commentInput.disabled = true;
       api.updateCard({id: data.id, data: data.toRAW()})
       .then((newCard) => {
         cardPopup.update(newCard);
         cardElement.update(newCard);
         cardPopup.showNewComment();
+        commentInput.value = ``;
+        commentInput.disabled = false;
         toFillFilmsListsExtra(2);
+      })
+      .catch(() => {
+        commentInput.disabled = false;
+        commentInput.style.border = `2px solid red`;
+        shake(commentInput);
+        data.comments.pop();
       });
     };
 
@@ -169,15 +179,18 @@ const listenerClickStatisticBtn = () => {
 
 const filters = createFilters();
 statisticBtn.addEventListener(`click`, listenerClickStatisticBtn);
-
+loadMessageTextContainer.textContent = `Loading movies...`;
+loadMessageTextContainer.style.width = `260px`;
 api.getCards()
   .then((cards) => {
     renderCards(cards, filmsListContainerMain, filters);
     updateFilters(filters);
-  });
-
-const load = (isSuccess) => {
-  return new Promise((res, rej) => {
-    setTimeout(isSuccess ? res : rej, 2000)
+    loadMessage.classList.add(`visually-hidden`);
   })
-}
+  .catch(() => {
+    loadMessageTextContainer.style.width = `640px`;
+    loadMessageTextContainer.textContent = `Something went wrong while loading movies. Check your connection or try again later`;
+    setTimeout(() => {
+      loadMessage.classList.remove(`visually-hidden`);
+    }, LOAD_ERROR_MASSAGE_TIMEOUT);
+  });
