@@ -18,8 +18,14 @@ export default class Card extends Component {
     this._comments = data.comments.slice();
     this._block = block;
     this._element = null;
-    this._onClick = null;
-    this._listener = null;
+    this._onClickComments = null;
+    this._listenerClickComments = null;
+    this._onAddToWatchList = null;
+    this._listenerClickAddToWatchlistBtn = null;
+    this._onMarkAsWatched = null;
+    this._listenerClickMarkAsWatchedBtn = null;
+    this._onFavorite = null;
+    this._listenerClickFavoriteBtn = null;
   }
 
   _partialUpdate() {
@@ -29,11 +35,29 @@ export default class Card extends Component {
     this._element = newElement;
   }
 
-  _onCardClick(evt) {
+  _onCardClickAddToWatchlistBtn() {
+    if (typeof this._onAddToWatchList === `function`) {
+      this._onAddToWatchList();
+    }
+  }
+
+  _onCardClickMarkAsWatchedBtn() {
+    if (typeof this._onMarkAsWatched === `function`) {
+      this._onMarkAsWatched();
+    }
+  }
+
+  _onCardClickFavoriteBtn() {
+    if (typeof this._onFavorite === `function`) {
+      this._onFavorite();
+    }
+  }
+
+  _onCardClickComments(evt) {
     evt.preventDefault();
-    if (typeof this._onClick === `function`) {
+    if (typeof this._onClickComments === `function`) {
       this._element.querySelector(`.film-card__comments`).blur();
-      this._onClick();
+      this._onClickComments();
     }
   }
 
@@ -41,16 +65,26 @@ export default class Card extends Component {
     return this._element;
   }
 
-  set onClick(fn) {
-    this._onClick = fn;
+  set onAddToWatchList(fn) {
+    this._onAddToWatchList = fn;
+  }
+
+  set onMarkAsWatched(fn) {
+    this._onMarkAsWatched = fn;
+  }
+
+  set onFavorite(fn) {
+    this._onFavorite = fn;
+  }
+
+  set onClickComments(fn) {
+    this._onClickComments = fn;
   }
 
   get template() {
 
-    let descriptionBlock = ``;
     let controlsBlock = ``;
     if (!this._block.parentNode.classList.contains(`films-list--extra`)) {
-      descriptionBlock = `<p class="film-card__description">${this._description}</p>`;
       controlsBlock = `
       <form class="film-card__controls">
         <button class="film-card__controls-item button film-card__controls-item--add-to-watchlist">Add to watchlist</button>
@@ -69,19 +103,34 @@ export default class Card extends Component {
         <span class="film-card__genre">${this._genre.join(`, `)}</span>
       </p>
       <img src="${this._poster}" alt="" class="film-card__poster">
-      ${descriptionBlock}
+      <p class="film-card__description">${this._description}</p>
       <button class="film-card__comments">${this._comments.length} comments</button>
       ${controlsBlock}
     </article>`.trim();
   }
 
   bind() {
-    this._listener = this._onCardClick.bind(this);
-    this._element.querySelector(`.film-card__comments`).addEventListener(`click`, this._listener);
+    this._listenerClickComments = this._onCardClickComments.bind(this);
+    this._element.querySelector(`.film-card__comments`).addEventListener(`click`, this._listenerClickComments);
+    if (!this._block.parentNode.classList.contains(`films-list--extra`)) {
+      this._listenerClickAddToWatchlistBtn = this._onCardClickAddToWatchlistBtn.bind(this);
+      this._element.querySelector(`.film-card__controls-item--add-to-watchlist`).addEventListener(`click`, this._listenerClickAddToWatchlistBtn);
+
+      this._listenerClickMarkAsWatchedBtn = this._onCardClickMarkAsWatchedBtn.bind(this);
+      this._element.querySelector(`.film-card__controls-item--mark-as-watched`).addEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
+
+      this._listenerClickFavoriteBtn = this._onCardClickFavoriteBtn.bind(this);
+      this._element.querySelector(`.film-card__controls-item--favorite`).addEventListener(`click`, this._listenerClickFavoriteBtn);
+    }
   }
 
   unbind() {
-    this._element.querySelector(`.film-card__comments`).removeEventListener(`click`, this._listener);
+    this._element.querySelector(`.film-card__comments`).removeEventListener(`click`, this._listenerClickComments);
+    if (!this._block.parentNode.classList.contains(`films-list--extra`)) {
+      this._element.querySelector(`.film-card__controls-item--add-to-watchlist`).removeEventListener(`click`, this._listenerClickAddToWatchlistBtn);
+      this._element.querySelector(`.film-card__controls-item--mark-as-watched`).removeEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
+      this._element.querySelector(`.film-card__controls-item--favorite`).removeEventListener(`click`, this._listenerClickFavoriteBtn);
+    }
   }
 
   update(data) {

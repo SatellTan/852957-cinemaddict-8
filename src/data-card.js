@@ -1,4 +1,4 @@
-const ALL_FILMS = [
+/* const ALL_FILMS = [
   `На море!`,
   `Географ глобус пропил`,
   `Любовь и голуби`,
@@ -58,15 +58,21 @@ const PEOPLE = [
   `Johnny Depp`,
   `Harrison Ford`,
   `Steven Spielberg`,
-];
+];*/
 
 export const EMOJIS = {
-  "sleeping": `😴`,
-  "neutral-face": `😐`,
-  "grinning": `😀`,
+  'sleeping': `😴`,
+  'neutral-face': `😐`,
+  'grinning': `😀`,
 };
 
-const MAX_SENTENCES_IN_DESCRIPTION = 4;
+export const USER_CATEGORY = {
+  '1': `novice`,
+  '2': `fan`,
+  '3': `movie buff`,
+};
+
+/* const MAX_SENTENCES_IN_DESCRIPTION = 4;
 const MAX_AGE_LIMIT = 18;
 const MAX_NUMBER_MEN = 3;
 
@@ -153,4 +159,4 @@ export default () => {
   };
 
   return film;
-};
+};*/

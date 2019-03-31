@@ -17,7 +17,7 @@ export default class ModelCard {
     this.writers = data.film_info[`writers`];
     this.watched = data.user_details[`already_watched`];
     this.favorite = data.user_details[`favorite`];
-    this.ownRating = data.user_details[`personal_rating`];
+    this.ownRating = Math.floor(data.user_details[`personal_rating`]);
     this.watchlist = data.user_details[`watchlist`];
   }
 

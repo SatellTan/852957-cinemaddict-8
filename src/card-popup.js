@@ -38,6 +38,8 @@ export default class CardPopup extends Component {
     this._listenerClickMarkAsWatchedBtn = null;
     this._onFavorite = null;
     this._listenerClickFavoriteBtn = null;
+    this._onDeleteComment = null;
+    this._listenerClickDeleteCommentBtn = null;
   }
 
   _processForm(formData) {
@@ -115,6 +117,12 @@ export default class CardPopup extends Component {
     }
   }
 
+  _onCardPopupClickDeleteCommentBtn() {
+    if (typeof this._onDeleteComment === `function`) {
+      this._onDeleteComment();
+    }
+  }
+
   get element() {
     return this._element;
   }
@@ -141,6 +149,10 @@ export default class CardPopup extends Component {
 
   set onFavorite(fn) {
     this._onFavorite = fn;
+  }
+
+  set onDeleteComment(fn) {
+    this._onDeleteComment = fn;
   }
 
   get template() {
@@ -245,7 +257,7 @@ export default class CardPopup extends Component {
                 <p class="film-details__comment-text">${comment.comment}</p>
                 <p class="film-details__comment-info">
                   <span class="film-details__comment-author">${comment.author}</span>
-                  <span class="film-details__comment-day">${moment(comment.date).format(`D MMMM YYYY`)}</span>
+                  <span class="film-details__comment-day">${moment(comment.date).fromNow()}</span>
                 </p>
               </div>
             </li>`.trim()))).join(``)}
@@ -267,8 +279,8 @@ export default class CardPopup extends Component {
         </section>
 
         <section class="film-details__user-rating-wrap">
-          <div class="film-details__user-rating-controls">
-            <span class="film-details__watched-status film-details__watched-status--active">${this._watched ? `Already watched` : ``}</span>
+          <div class="film-details__user-rating-controls visually-hidden">
+            <span class="film-details__watched-status film-details__watched-status--active">${this._watched ? `already watched` : `will watch`}</span>
             <button class="film-details__watched-reset" type="button">undo</button>
           </div>
 
@@ -307,6 +319,9 @@ export default class CardPopup extends Component {
 
     this._listenerClickFavoriteBtn = this._onCardPopupClickFavoriteBtn.bind(this);
     this._element.querySelector(`#favorite`).addEventListener(`click`, this._listenerClickFavoriteBtn);
+
+    this._listenerClickDeleteCommentBtn = this._onCardPopupClickDeleteCommentBtn.bind(this);
+    this._element.querySelector(`.film-details__watched-reset`).addEventListener(`click`, this._listenerClickDeleteCommentBtn);
   }
 
   unbind() {
@@ -315,6 +330,7 @@ export default class CardPopup extends Component {
     this._element.querySelector(`#watchlist`).removeEventListener(`click`, this._listenerClickAddToWatchlistBtn);
     this._element.querySelector(`#watched`).removeEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
     this._element.querySelector(`#favorite`).removeEventListener(`click`, this._listenerClickFavoriteBtn);
+    this._element.querySelector(`.film-details__watched-reset`).removeEventListener(`click`, this._listenerClickDeleteCommentBtn);
   }
 
   update(data) {
@@ -325,7 +341,7 @@ export default class CardPopup extends Component {
     this._favorite = data.favorite;
   }
 
-  showNewComment() {
+  updateCommentsBlock() {
     const commentsBlock = this._element.querySelector(`.film-details__comments-list`);
     commentsBlock.innerHTML = `${(Array.from(this._comments).map((comment) => (`
     <li class="film-details__comment">
@@ -334,7 +350,7 @@ export default class CardPopup extends Component {
         <p class="film-details__comment-text">${comment.comment}</p>
         <p class="film-details__comment-info">
           <span class="film-details__comment-author">${comment.author}</span>
-          <span class="film-details__comment-day">${moment(comment.date).format(`D MMMM YYYY`)}</span>
+          <span class="film-details__comment-day">${moment(comment.date).fromNow()}</span>
         </p>
       </div>
     </li>`.trim()))).join(``)}`;
