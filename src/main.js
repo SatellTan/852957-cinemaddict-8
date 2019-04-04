@@ -3,7 +3,7 @@ import Card from './card';
 import CardPopup from './card-popup';
 import Filter from './filter';
 import displayStatistics from './statistic';
-import {USER_CATEGORY} from './data-card';
+import {UserCategory} from './data-total';
 import API from './api';
 
 const FILTERS_NAMES = [`Favorites`, `History`, `Watchlist`, `All movies`];
@@ -28,8 +28,9 @@ const profileRating = document.querySelector(`.profile__rating`);
 const searchField = document.querySelector(`.search__field`);
 const showMoreBtn = filmsBlock.querySelector(`.films-list__show-more`);
 let initialCards = [];
-let outputCardsList = [];
+let outputCards = [];
 let displayedCardsIndex;
+let filters;
 let noFiltering;
 
 const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
@@ -46,11 +47,11 @@ const getUserCategory = (cards) => {
   const watchedCards = cards.filter((it) => it.watched);
   const count = watchedCards.length;
   if (count <= 10) {
-    return USER_CATEGORY[1];
+    return UserCategory[1];
   } else if (count >= 11 && count <= 20) {
-    return USER_CATEGORY[2];
+    return UserCategory[2];
   }
-  return USER_CATEGORY[3];
+  return UserCategory[3];
 };
 
 const createFilter = (name) => {
@@ -75,16 +76,12 @@ const createFilter = (name) => {
     filmsBlock.classList.remove(`visually-hidden`);
     statisticsBlock.classList.add(`visually-hidden`);
 
-    outputCardsList = filterElement.toFilter(initialCards, filterElement._name.toLowerCase());
-    if (filterElement._name === `All movies`) {
-      data.count = ``;
-    } else {
-      data.count = outputCardsList.length;
-    }
+    outputCards = filterElement.toFilter(initialCards, filterElement._name.toLowerCase());
+    data.count = (filterElement._name === `All movies`) ? `` : outputCards.length;
     filterElement.update(data);
     filterElement.element.classList.add(`main-navigation__item--active`);
     displayedCardsIndex = 0;
-    renderCards(outputCardsList, filmsListContainerMain, filters);
+    renderCards(outputCards, filmsListContainerMain);
   };
 
   return filterElement;
@@ -94,7 +91,7 @@ const createFilters = () => {
   return FILTERS_NAMES.map((element)=>createFilter(element));
 };
 
-const updateFilters = (filters) => {
+const updateFilters = () => {
   for (let element of filters) {
     const filteredCards = element.toFilter(initialCards, element._name.toLowerCase());
     let filterCount = filteredCards.length;
@@ -108,15 +105,15 @@ const updateFilters = (filters) => {
     element.update(dataFilter);
     const filterActive = document.querySelector(`.main-navigation__item--active`);
     if (element._element === filterActive) {
-      outputCardsList = filteredCards;
+      outputCards = filteredCards;
       displayedCardsIndex = 0;
-      renderCards(outputCardsList, filmsListContainerMain, filters);
+      renderCards(outputCards, filmsListContainerMain);
     }
   }
   profileRating.textContent = getUserCategory(initialCards);
 };
 
-const renderCards = (cards, block, filters) => {
+const renderCards = (cards, block) => {
   block.innerHTML = ``;
   let endCardsListIndex = cards.length;
 
@@ -132,10 +129,10 @@ const renderCards = (cards, block, filters) => {
 
   for (let i = 0; i < endCardsListIndex; i++) {
     const data = cards[i];
-    const cardElement = new Card(data, block);
+    const cardElement = new Card(data);
     const cardPopup = new CardPopup(data);
-
-    cardElement.render(block);
+    cardElement.blockOfCard = block;
+    cardElement.render(cardElement.block);
 
     cardElement.onClickComments = () => {
       const openCardPopup = document.querySelector(`.film-details`);
@@ -143,6 +140,7 @@ const renderCards = (cards, block, filters) => {
         openCardPopup.parentNode.removeChild(openCardPopup);
       }
       cardPopup.render(filmPopupContainer);
+      cardPopup.updateCommentsBlock();
     };
 
     cardElement.onAddToWatchList = () => {
@@ -168,7 +166,7 @@ const renderCards = (cards, block, filters) => {
       api.updateCard({id: data.id, data: data.toRAW()})
       .then((newCard) => {
         cardPopup.update(newCard);
-        updateFilters(filters);
+        updateFilters();
       });
     };
 
@@ -180,7 +178,7 @@ const renderCards = (cards, block, filters) => {
         cardPopup.update(newCard);
         cardElement.update(newCard);
         cardPopup.unrender();
-        updateFilters(filters);
+        updateFilters();
       });
     };
 
@@ -259,7 +257,7 @@ const toFillFilmsListsExtra = (numberOfContainer) => {
   } else if (numberOfContainer === 2) {
     accessoryArrayCards.sort((prev, next) => next.comments.length - prev.comments.length);
   }
-  renderCards(accessoryArrayCards.slice(0, QUANTITY_CARDS_OF_FILM_LIST_EXTRA), filmsListExtraContainers[numberOfContainer - 1], filters);
+  renderCards(accessoryArrayCards.slice(0, QUANTITY_CARDS_OF_FILM_LIST_EXTRA), filmsListExtraContainers[numberOfContainer - 1]);
 };
 
 const listenerClickStatisticBtn = () => {
@@ -274,42 +272,45 @@ const listenerClickOnSearchField = () => {
     filterActive.classList.remove(`main-navigation__item--active`);
     noFiltering.classList.add(`main-navigation__item--active`);
 
-    outputCardsList = initialCards;
+    outputCards = initialCards;
     displayedCardsIndex = 0;
-    renderCards(initialCards, filmsListContainerMain, filters);
+    renderCards(initialCards, filmsListContainerMain);
   }
 };
 
 const listenerChangesOnSearchField = () => {
-  outputCardsList = initialCards.filter((it) => it.title.toLowerCase().includes(searchField.value.toLowerCase()));
+  outputCards = initialCards.filter((it) => it.title.toLowerCase().includes(searchField.value.toLowerCase()));
   displayedCardsIndex = 0;
-  renderCards(outputCardsList, filmsListContainerMain, filters);
+  renderCards(outputCards, filmsListContainerMain);
 };
 
 const listenerClickOnShowMoreBtn = () => {
-  renderCards(outputCardsList, filmsListContainerMain, filters);
+  renderCards(outputCards, filmsListContainerMain);
 };
 
-const filters = createFilters();
-statisticBtn.addEventListener(`click`, listenerClickStatisticBtn);
-searchField.addEventListener(`click`, listenerClickOnSearchField);
-searchField.addEventListener(`input`, listenerChangesOnSearchField);
-showMoreBtn.addEventListener(`click`, listenerClickOnShowMoreBtn);
-loadMessageTextContainer.textContent = `Loading movies...`;
-loadMessageTextContainer.style.width = `260px`;
-api.getCards()
-  .then((cards) => {
-    initialCards = cards.slice(0);
-    renderCards(initialCards, filmsListContainerMain, filters);
-    updateFilters(filters);
-    footerStatistics.textContent = `${cards.length.toLocaleString()} movies inside`;
-    loadMessage.classList.add(`visually-hidden`);
-  })
-  .catch((err) => {
-    //console.error(`fetch error: ${err}`);
-    loadMessageTextContainer.style.width = `640px`;
-    loadMessageTextContainer.textContent = `Something went wrong while loading movies. Check your connection or try again later`;
-    setTimeout(() => {
-      loadMessage.classList.remove(`visually-hidden`);
-    }, LOAD_ERROR_MASSAGE_TIMEOUT);
-  });
+const getStarted = () => {
+  filters = createFilters();
+  statisticBtn.addEventListener(`click`, listenerClickStatisticBtn);
+  searchField.addEventListener(`click`, listenerClickOnSearchField);
+  searchField.addEventListener(`input`, listenerChangesOnSearchField);
+  showMoreBtn.addEventListener(`click`, listenerClickOnShowMoreBtn);
+  loadMessageTextContainer.textContent = `Loading movies...`;
+  loadMessageTextContainer.style.width = `260px`;
+  api.getCards()
+    .then((cards) => {
+      initialCards = cards.slice(0);
+      renderCards(initialCards, filmsListContainerMain);
+      updateFilters();
+      footerStatistics.textContent = `${cards.length.toLocaleString()} movies inside`;
+      loadMessage.classList.add(`visually-hidden`);
+    })
+    .catch(() => {
+      loadMessageTextContainer.style.width = `640px`;
+      loadMessageTextContainer.textContent = `Something went wrong while loading movies. Check your connection or try again later`;
+      setTimeout(() => {
+        loadMessage.classList.remove(`visually-hidden`);
+      }, LOAD_ERROR_MASSAGE_TIMEOUT);
+    });
+};
+
+getStarted();

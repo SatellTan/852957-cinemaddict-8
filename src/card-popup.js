@@ -1,6 +1,6 @@
 import moment from 'moment';
 import Component from './component';
-import {EMOJIS} from './data-card';
+import {EMOJIS} from './data-total';
 
 const ESC_KEYCODE = 27;
 const ENTER_KEYCODE = 13;
@@ -40,6 +40,28 @@ export default class CardPopup extends Component {
     this._listenerClickFavoriteBtn = null;
     this._onDeleteComment = null;
     this._listenerClickDeleteCommentBtn = null;
+  }
+
+  updateCommentsBlock() {
+    const commentsBlock = this._element.querySelector(`.film-details__comments-list`);
+    commentsBlock.innerHTML = ``;
+    for (const iterator of this._comments) {
+      const comment = `
+      <li class="film-details__comment">
+        <span class="film-details__comment-emoji">${EMOJIS[iterator.emotion]}</span>
+        <div>
+          <p class="film-details__comment-text"></p>
+          <p class="film-details__comment-info">
+            <span class="film-details__comment-author">${iterator.author}</span>
+            <span class="film-details__comment-day">${moment(iterator.date).fromNow()}</span>
+          </p>
+        </div>
+      </li>`;
+      commentsBlock.insertAdjacentHTML(`beforeend`, comment);
+      const commentsTexts = commentsBlock.querySelectorAll(`.film-details__comment-text`);
+      commentsTexts[commentsTexts.length - 1].textContent = iterator.comment;
+    }
+    commentsBlock.previousElementSibling.innerHTML = `<h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${this._comments.length}</span></h3>`;
   }
 
   _processForm(formData) {
@@ -250,17 +272,6 @@ export default class CardPopup extends Component {
           <h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${this._comments.length}</span></h3>
 
           <ul class="film-details__comments-list">
-            ${(Array.from(this._comments).map((comment) => (`
-            <li class="film-details__comment">
-              <span class="film-details__comment-emoji">${EMOJIS[comment.emotion]}</span>
-              <div>
-                <p class="film-details__comment-text">${comment.comment}</p>
-                <p class="film-details__comment-info">
-                  <span class="film-details__comment-author">${comment.author}</span>
-                  <span class="film-details__comment-day">${moment(comment.date).fromNow()}</span>
-                </p>
-              </div>
-            </li>`.trim()))).join(``)}
           </ul>
 
           <div class="film-details__new-comment">
@@ -339,22 +350,6 @@ export default class CardPopup extends Component {
     this._watchlist = data.watchlist;
     this._watched = data.watched;
     this._favorite = data.favorite;
-  }
-
-  updateCommentsBlock() {
-    const commentsBlock = this._element.querySelector(`.film-details__comments-list`);
-    commentsBlock.innerHTML = `${(Array.from(this._comments).map((comment) => (`
-    <li class="film-details__comment">
-      <span class="film-details__comment-emoji">${EMOJIS[comment.emotion]}</span>
-      <div>
-        <p class="film-details__comment-text">${comment.comment}</p>
-        <p class="film-details__comment-info">
-          <span class="film-details__comment-author">${comment.author}</span>
-          <span class="film-details__comment-day">${moment(comment.date).fromNow()}</span>
-        </p>
-      </div>
-    </li>`.trim()))).join(``)}`;
-    commentsBlock.previousElementSibling.innerHTML = `<h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${this._comments.length}</span></h3>`;
   }
 
   static createMapper(target) {

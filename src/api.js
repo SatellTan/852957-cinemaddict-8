@@ -53,17 +53,12 @@ export default class API {
       .then(ModelCard.parseCard);
   }
 
-  deleteCard({id}) {
-    return this._load({url: `movies/${id}`, method: Method.DELETE});
-  }
-
   _load({url, method = Method.GET, body = null, headers = new Headers()}) {
     headers.append(`Authorization`, this._authorization);
 
     return fetch(`${this._endPoint}/${url}`, {method, body, headers})
       .then(checkStatus)
       .catch((err) => {
-        // console.error(`fetch error: ${err}`);
         throw err;
       });
   }

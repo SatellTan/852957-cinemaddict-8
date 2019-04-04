@@ -6,7 +6,7 @@ const momentDurationFormatSetup = require(`moment-duration-format`);
 momentDurationFormatSetup(moment);
 
 export default class Card extends Component {
-  constructor(data, block) {
+  constructor(data) {
     super();
     this._title = data.title;
     this._releaseDate = data.releaseDate;
@@ -16,7 +16,7 @@ export default class Card extends Component {
     this._genre = data.genre;
     this._poster = data.poster;
     this._comments = data.comments.slice();
-    this._block = block;
+    this.block = null;
     this._element = null;
     this._onClickComments = null;
     this._listenerClickComments = null;
@@ -81,10 +81,14 @@ export default class Card extends Component {
     this._onClickComments = fn;
   }
 
+  set blockOfCard(param) {
+    this.block = param;
+  }
+
   get template() {
 
     let controlsBlock = ``;
-    if (!this._block.parentNode.classList.contains(`films-list--extra`)) {
+    if (!this.block.parentNode.classList.contains(`films-list--extra`)) {
       controlsBlock = `
       <form class="film-card__controls">
         <button class="film-card__controls-item button film-card__controls-item--add-to-watchlist">Add to watchlist</button>
@@ -112,7 +116,7 @@ export default class Card extends Component {
   bind() {
     this._listenerClickComments = this._onCardClickComments.bind(this);
     this._element.querySelector(`.film-card__comments`).addEventListener(`click`, this._listenerClickComments);
-    if (!this._block.parentNode.classList.contains(`films-list--extra`)) {
+    if (!this.block.parentNode.classList.contains(`films-list--extra`)) {
       this._listenerClickAddToWatchlistBtn = this._onCardClickAddToWatchlistBtn.bind(this);
       this._element.querySelector(`.film-card__controls-item--add-to-watchlist`).addEventListener(`click`, this._listenerClickAddToWatchlistBtn);
 
@@ -126,7 +130,7 @@ export default class Card extends Component {
 
   unbind() {
     this._element.querySelector(`.film-card__comments`).removeEventListener(`click`, this._listenerClickComments);
-    if (!this._block.parentNode.classList.contains(`films-list--extra`)) {
+    if (!this.block.parentNode.classList.contains(`films-list--extra`)) {
       this._element.querySelector(`.film-card__controls-item--add-to-watchlist`).removeEventListener(`click`, this._listenerClickAddToWatchlistBtn);
       this._element.querySelector(`.film-card__controls-item--mark-as-watched`).removeEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
       this._element.querySelector(`.film-card__controls-item--favorite`).removeEventListener(`click`, this._listenerClickFavoriteBtn);
