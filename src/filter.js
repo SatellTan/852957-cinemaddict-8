@@ -11,11 +11,7 @@ export default class Filter extends Component {
   }
 
   _partialUpdate() {
-    if (this._count) {
-      this._element.innerHTML = `${this._name}<span class="main-navigation__item-count">${this._count}</span>`;
-    } else {
-      this._element.innerHTML = `${this._name}`;
-    }
+    this._element.innerHTML = this._count ? `${this._name}<span class="main-navigation__item-count">${this._count}</span>` : `${this._name}`;
   }
 
   get element() {

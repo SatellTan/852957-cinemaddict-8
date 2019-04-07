@@ -64,29 +64,9 @@ export default class CardPopup extends Component {
     commentsBlock.previousElementSibling.innerHTML = `<h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${this._comments.length}</span></h3>`;
   }
 
-  _processForm(formData) {
-    const entry = {
-      comment: {},
-      score: ``,
-      watchlist: ``,
-      watched: ``,
-      favorite: ``,
-    };
-    const cardPopupMapper = CardPopup.createMapper(entry);
-
-    for (const pair of formData.entries()) {
-      const [property, value] = pair;
-      if (cardPopupMapper[property]) {
-        cardPopupMapper[property](value);
-      }
-    }
-
-    return entry;
-  }
-
   _toGetFormDate() {
     const formData = new FormData(this._element.querySelector(`.film-details__inner`));
-    return this._processForm(formData);
+    return CardPopup.processForm(formData);
   }
 
   _onCardPopupClickCloseBtn(evt) {
@@ -350,6 +330,25 @@ export default class CardPopup extends Component {
     this._watchlist = data.watchlist;
     this._watched = data.watched;
     this._favorite = data.favorite;
+  }
+
+  static processForm(formData) {
+    const entry = {
+      comment: {},
+      score: ``,
+      watchlist: ``,
+      watched: ``,
+      favorite: ``,
+    };
+    const cardPopupMapper = CardPopup.createMapper(entry);
+
+    for (const pair of formData.entries()) {
+      const [property, value] = pair;
+      if (cardPopupMapper[property]) {
+        cardPopupMapper[property](value);
+      }
+    }
+    return entry;
   }
 
   static createMapper(target) {

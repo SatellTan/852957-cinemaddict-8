@@ -9,7 +9,7 @@ const getTemplateStatistic = (cards, topGenre) => {
   let totalDuration = 0;
   if (cards.length) {
     totalDuration = cards.reduce((a, b) => {
-      return (parseFloat(a) || 0) + (parseFloat(b.duration) || 0);
+      return (a || 0) + (b.duration || 0);
     }, 0);
   }
 
@@ -128,7 +128,7 @@ export default (cards) => {
     }, []);
   }
 
-  let resultGenres = totalGenres.reduce(function (acc, el) {
+  let resultGenres = totalGenres.reduce((acc, el) => {
     acc[el] = (acc[el] || 0) + 1;
     return acc;
   }, {});
