@@ -18,7 +18,7 @@ export default class ModelCard {
     this.watched = data.user_details[`already_watched`];
     this.favorite = data.user_details[`favorite`];
     this.ownRating = Math.floor(data.user_details[`personal_rating`]);
-    this.watchingDate = data.user_details['watching_date'];
+    this.watchingDate = data.user_details[`watching_date`];
     this.watchlist = data.user_details[`watchlist`];
   }
 
