@@ -1,6 +1,7 @@
 import moment from 'moment';
 import Component from './component';
 import {EMOJIS} from './data-total';
+import {USER_NAME} from './data-total';
 
 const ESC_KEYCODE = 27;
 const ENTER_KEYCODE = 13;
@@ -26,6 +27,7 @@ export default class CardPopup extends Component {
     this._watchlist = data.watchlist;
     this._watched = data.watched;
     this._favorite = data.favorite;
+    this._watchingDate = data.watchingDate;
     this._element = null;
     this._onClickCloseBtn = null;
     this._listenerClickCloseBtn = null;
@@ -40,109 +42,11 @@ export default class CardPopup extends Component {
     this._listenerClickFavoriteBtn = null;
     this._onDeleteComment = null;
     this._listenerClickDeleteCommentBtn = null;
-  }
-
-  updateCommentsBlock() {
-    const commentsBlock = this._element.querySelector(`.film-details__comments-list`);
-    commentsBlock.innerHTML = ``;
-    for (const iterator of this._comments) {
-      const comment = `
-      <li class="film-details__comment">
-        <span class="film-details__comment-emoji">${EMOJIS[iterator.emotion]}</span>
-        <div>
-          <p class="film-details__comment-text"></p>
-          <p class="film-details__comment-info">
-            <span class="film-details__comment-author">${iterator.author}</span>
-            <span class="film-details__comment-day">${moment(iterator.date).fromNow()}</span>
-          </p>
-        </div>
-      </li>`;
-      commentsBlock.insertAdjacentHTML(`beforeend`, comment);
-      const commentsTexts = commentsBlock.querySelectorAll(`.film-details__comment-text`);
-      commentsTexts[commentsTexts.length - 1].textContent = iterator.comment;
-    }
-    commentsBlock.previousElementSibling.innerHTML = `<h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${this._comments.length}</span></h3>`;
-  }
-
-  _processForm(formData) {
-    const entry = {
-      comment: {},
-      score: ``,
-      watchlist: ``,
-      watched: ``,
-      favorite: ``,
-    };
-    const cardPopupMapper = CardPopup.createMapper(entry);
-
-    for (const pair of formData.entries()) {
-      const [property, value] = pair;
-      if (cardPopupMapper[property]) {
-        cardPopupMapper[property](value);
-      }
-    }
-
-    return entry;
-  }
-
-  _toGetFormDate() {
-    const formData = new FormData(this._element.querySelector(`.film-details__inner`));
-    return this._processForm(formData);
-  }
-
-  _onCardPopupClickCloseBtn(evt) {
-    evt.preventDefault();
-    const newData = this._toGetFormDate();
-
-    if (typeof this._onClickCloseBtn === `function`) {
-      this._onClickCloseBtn(newData);
-    }
-  }
-
-  _onCardPopupKeyDown(evt) {
-    if ((evt.keyCode === ESC_KEYCODE) && (typeof this._onEscPress === `function`)) {
-
-      evt.preventDefault();
-      this._onEscPress();
-
-    } else if (evt.ctrlKey && (evt.keyCode === ENTER_KEYCODE)) {
-
-      evt.preventDefault();
-      const newData = this._toGetFormDate();
-
-      if (typeof this._onAddComment === `function`) {
-        this._onAddComment(newData);
-      }
-    }
-  }
-
-  _onCardPopupClickAddToWatchlistBtn() {
-    const newData = this._toGetFormDate();
-
-    if (typeof this._onAddToWatchList === `function`) {
-      this._onAddToWatchList(newData);
-    }
-  }
-
-  _onCardPopupClickMarkAsWatchedBtn() {
-    const newData = this._toGetFormDate();
-
-    if (typeof this._onMarkAsWatched === `function`) {
-      this._onMarkAsWatched(newData);
-    }
-  }
-
-  _onCardPopupClickFavoriteBtn() {
-    const newData = this._toGetFormDate();
-
-    if (typeof this._onFavorite === `function`) {
-      this._onFavorite(newData);
-    }
-  }
-
-  _onCardPopupClickDeleteCommentBtn() {
-    if (typeof this._onDeleteComment === `function`) {
-      this._onDeleteComment();
-    }
+    this._selectorCloseBtn = null;
+    this._selectorWatchlistBtn = null;
+    this._selectorWatchedBtn = null;
+    this._selectorFavoriteBtn = null;
+    this._selectorWatchedResetBtn = null;
   }
 
   get element() {
@@ -290,9 +194,9 @@ export default class CardPopup extends Component {
         </section>
 
         <section class="film-details__user-rating-wrap">
-          <div class="film-details__user-rating-controls visually-hidden">
-            <span class="film-details__watched-status film-details__watched-status--active">${this._watched ? `already watched` : `will watch`}</span>
-            <button class="film-details__watched-reset" type="button">undo</button>
+          <div class="film-details__user-rating-controls">
+            <span class="film-details__watched-status film-details__watched-status--active"></span>
+            <button class="film-details__watched-reset visually-hidden" type="button">undo</button>
           </div>
 
           <div class="film-details__user-score">
@@ -315,33 +219,87 @@ export default class CardPopup extends Component {
     </section>`.trim();
   }
 
-  bind() {
-    this._listenerClickCloseBtn = this._onCardPopupClickCloseBtn.bind(this);
-    this._element.querySelector(`.film-details__close-btn`).addEventListener(`click`, this._listenerClickCloseBtn);
-
-    this._listenerKeyDown = this._onCardPopupKeyDown.bind(this);
-    this._element.parentNode.addEventListener(`keydown`, this._listenerKeyDown);
-
-    this._listenerClickAddToWatchlistBtn = this._onCardPopupClickAddToWatchlistBtn.bind(this);
-    this._element.querySelector(`#watchlist`).addEventListener(`click`, this._listenerClickAddToWatchlistBtn);
-
-    this._listenerClickMarkAsWatchedBtn = this._onCardPopupClickMarkAsWatchedBtn.bind(this);
-    this._element.querySelector(`#watched`).addEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
-
-    this._listenerClickFavoriteBtn = this._onCardPopupClickFavoriteBtn.bind(this);
-    this._element.querySelector(`#favorite`).addEventListener(`click`, this._listenerClickFavoriteBtn);
-
-    this._listenerClickDeleteCommentBtn = this._onCardPopupClickDeleteCommentBtn.bind(this);
-    this._element.querySelector(`.film-details__watched-reset`).addEventListener(`click`, this._listenerClickDeleteCommentBtn);
+  updateCommentsBlock() {
+    const commentsBlock = this._element.querySelector(`.film-details__comments-list`);
+    commentsBlock.innerHTML = ``;
+    for (const iterator of this._comments) {
+      const comment = `
+      <li class="film-details__comment">
+        <span class="film-details__comment-emoji">${EMOJIS[iterator.emotion]}</span>
+        <div>
+          <p class="film-details__comment-text"></p>
+          <p class="film-details__comment-info">
+            <span class="film-details__comment-author">${iterator.author}</span>
+            <span class="film-details__comment-day">${moment(iterator.date).fromNow()}</span>
+          </p>
+        </div>
+      </li>`;
+      commentsBlock.insertAdjacentHTML(`beforeend`, comment);
+      const commentsTexts = commentsBlock.querySelectorAll(`.film-details__comment-text`);
+      commentsTexts[commentsTexts.length - 1].textContent = iterator.comment;
+    }
+    commentsBlock.previousElementSibling.innerHTML = `<h3 class="film-details__comments-title">Comments <span class="film-details__comments-count">${this._comments.length}</span></h3>`;
   }
 
-  unbind() {
-    this._element.querySelector(`.film-details__close-btn`).removeEventListener(`click`, this._listenerClickCloseBtn);
-    this._element.parentNode.removeEventListener(`keydown`, this._listenerKeyDown);
-    this._element.querySelector(`#watchlist`).removeEventListener(`click`, this._listenerClickAddToWatchlistBtn);
-    this._element.querySelector(`#watched`).removeEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
-    this._element.querySelector(`#favorite`).removeEventListener(`click`, this._listenerClickFavoriteBtn);
-    this._element.querySelector(`.film-details__watched-reset`).removeEventListener(`click`, this._listenerClickDeleteCommentBtn);
+  _toGetFormDate() {
+    const formData = new FormData(this._element.querySelector(`.film-details__inner`));
+    return CardPopup.processForm(formData);
+  }
+
+  _onCardPopupClickCloseBtn(evt) {
+    evt.preventDefault();
+    const newData = this._toGetFormDate();
+
+    if (typeof this._onClickCloseBtn === `function`) {
+      this._onClickCloseBtn(newData);
+    }
+  }
+
+  _onCardPopupKeyDown(evt) {
+    if ((evt.keyCode === ESC_KEYCODE) && (typeof this._onEscPress === `function`)) {
+
+      evt.preventDefault();
+      this._onEscPress();
+
+    } else if (evt.ctrlKey && (evt.keyCode === ENTER_KEYCODE)) {
+
+      evt.preventDefault();
+      const newData = this._toGetFormDate();
+
+      if (typeof this._onAddComment === `function`) {
+        this._onAddComment(newData);
+      }
+    }
+  }
+
+  _onCardPopupClickAddToWatchlistBtn() {
+    const newData = this._toGetFormDate();
+
+    if (typeof this._onAddToWatchList === `function`) {
+      this._onAddToWatchList(newData);
+    }
+  }
+
+  _onCardPopupClickMarkAsWatchedBtn() {
+    const newData = this._toGetFormDate();
+
+    if (typeof this._onMarkAsWatched === `function`) {
+      this._onMarkAsWatched(newData);
+    }
+  }
+
+  _onCardPopupClickFavoriteBtn() {
+    const newData = this._toGetFormDate();
+
+    if (typeof this._onFavorite === `function`) {
+      this._onFavorite(newData);
+    }
+  }
+
+  _onCardPopupClickDeleteCommentBtn() {
+    if (typeof this._onDeleteComment === `function`) {
+      this._onDeleteComment();
+    }
   }
 
   update(data) {
@@ -352,11 +310,69 @@ export default class CardPopup extends Component {
     this._favorite = data.favorite;
   }
 
+  bind() {
+    this._listenerClickCloseBtn = this._onCardPopupClickCloseBtn.bind(this);
+    this._selectorCloseBtn = this._element.querySelector(`.film-details__close-btn`);
+    this._selectorCloseBtn.addEventListener(`click`, this._listenerClickCloseBtn);
+
+    this._listenerKeyDown = this._onCardPopupKeyDown.bind(this);
+    this._element.parentNode.addEventListener(`keydown`, this._listenerKeyDown);
+
+    this._listenerClickAddToWatchlistBtn = this._onCardPopupClickAddToWatchlistBtn.bind(this);
+    this._selectorWatchlistBtn = this._element.querySelector(`#watchlist`);
+    this._selectorWatchlistBtn.addEventListener(`click`, this._listenerClickAddToWatchlistBtn);
+
+    this._listenerClickMarkAsWatchedBtn = this._onCardPopupClickMarkAsWatchedBtn.bind(this);
+    this._selectorWatchedBtn = this._element.querySelector(`#watched`);
+    this._selectorWatchedBtn.addEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
+
+    this._listenerClickFavoriteBtn = this._onCardPopupClickFavoriteBtn.bind(this);
+    this._selectorFavoriteBtn = this._element.querySelector(`#favorite`);
+    this._selectorFavoriteBtn.addEventListener(`click`, this._listenerClickFavoriteBtn);
+
+    this._listenerClickDeleteCommentBtn = this._onCardPopupClickDeleteCommentBtn.bind(this);
+    this._selectorWatchedResetBtn = this._element.querySelector(`.film-details__watched-reset`);
+    this._selectorWatchedResetBtn.addEventListener(`click`, this._listenerClickDeleteCommentBtn);
+  }
+
+  unbind() {
+    this._selectorCloseBtn.removeEventListener(`click`, this._listenerClickCloseBtn);
+    this._selectorCloseBtn = null;
+    this._element.parentNode.removeEventListener(`keydown`, this._listenerKeyDown);
+    this._selectorWatchlistBtn.removeEventListener(`click`, this._listenerClickAddToWatchlistBtn);
+    this._selectorWatchlistBtn = null;
+    this._selectorWatchedBtn.removeEventListener(`click`, this._listenerClickMarkAsWatchedBtn);
+    this._selectorWatchedBtn = null;
+    this._selectorFavoriteBtn.removeEventListener(`click`, this._listenerClickFavoriteBtn);
+    this._selectorFavoriteBtn = null;
+    this._selectorWatchedResetBtn.removeEventListener(`click`, this._listenerClickDeleteCommentBtn);
+    this._selectorWatchedResetBtn = null;
+  }
+
+  static processForm(formData) {
+    const entry = {
+      comment: {},
+      score: ``,
+      watchlist: ``,
+      watched: ``,
+      favorite: ``,
+    };
+    const cardPopupMapper = CardPopup.createMapper(entry);
+
+    for (const pair of formData.entries()) {
+      const [property, value] = pair;
+      if (cardPopupMapper[property]) {
+        cardPopupMapper[property](value);
+      }
+    }
+    return entry;
+  }
+
   static createMapper(target) {
     const addNewComment = (value) => {
       if (value) {
         const newComment = {
-          author: `Me`,
+          author: USER_NAME,
           comment: value,
           date: new Date(),
           emotion: document.querySelector(`.film-details__emoji-item:checked`).value,

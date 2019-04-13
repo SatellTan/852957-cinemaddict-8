@@ -4,8 +4,7 @@ export default (template, container, position = `beforeend`) => {
 
   if (position === `beforeend`) {
     return container.lastChild;
-  } else {
-    return container.firstChild;
   }
 
+  return container.firstChild;
 };

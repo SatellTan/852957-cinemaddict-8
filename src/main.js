@@ -2,17 +2,26 @@ import generateDataFilter from './data-filter';
 import Card from './card';
 import CardPopup from './card-popup';
 import Filter from './filter';
+import FilterStatistic from './filter-statistic';
+import Search from './search';
 import displayStatistics from './statistic';
-import {UserCategory} from './data-total';
+import {FILTERS_NAMES} from './data-total';
+import {USER_CATEGORY} from './data-total';
+import {USER_NAME} from './data-total';
+import {FILTERS_STATISTIC_NAMES} from './data-total';
 import API from './api';
+import Provider from './provider';
+import Store from './store';
 
-const FILTERS_NAMES = [`Favorites`, `History`, `Watchlist`, `All movies`];
-const QUANTITY_CARDS_OF_FILM_LIST_EXTRA = 2;
+const QUANTITY_CARDS_IN_FILM_LIST_EXTRA = 2;
 const AUTHORIZATION = `Basic dXNlckBwYXNzd29yZAo=${Math.random()}`;
 const END_POINT = `https://es8-demo-srv.appspot.com/moowle`;
+const CARDS_STORE_KEY = `cards-store-key`;
 const ANIMATION_TIMEOUT = 600;
 const LOAD_ERROR_MASSAGE_TIMEOUT = 6000;
 const AMOUNT_CARDS_IN_ITERATION = 5;
+const TOPRATED_CARDSLIST_CONTAINER = 1;
+const MOSTCOMMENTED_CARDSLIST_CONTAINER = 2;
 
 const filmsBlock = document.querySelector(`.films`);
 const filmsListContainerMain = filmsBlock.querySelector(`.films-list .films-list__container`);
@@ -21,19 +30,31 @@ const statisticsBlock = document.querySelector(`.statistic`);
 const statisticBtn = document.querySelector(`.main-navigation__item--additional`);
 const filmPopupContainer = document.querySelector(`body`);
 const filtersContainer = document.querySelector(`.main-navigation`);
+const filtersStatisticContainer = document.querySelector(`.statistic__filters`);
 const loadMessage = document.querySelector(`.preloader`);
 const loadMessageTextContainer = document.querySelector(`.preloader-text`);
 const footerStatistics = document.querySelector(`.footer__statistics p`);
 const profileRating = document.querySelector(`.profile__rating`);
-const searchField = document.querySelector(`.search__field`);
+const searchBlock = document.querySelector(`.header__search`);
 const showMoreBtn = filmsBlock.querySelector(`.films-list__show-more`);
 let initialCards = [];
 let outputCards = [];
 let displayedCardsIndex;
 let filters;
+let filtersStatistic;
 let noFiltering;
 
 const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
+const store = new Store({key: CARDS_STORE_KEY, storage: localStorage});
+const provider = new Provider({api, store, generateId: () => String(Date.now())});
+
+window.addEventListener(`offline`, () => {
+  document.title = `${document.title}[OFFLINE]`;
+});
+window.addEventListener(`online`, () => {
+  document.title = document.title.split(`[OFFLINE]`)[0];
+  provider.syncCards();
+});
 
 const shake = (element) => {
   element.style.animation = `shake ${ANIMATION_TIMEOUT / 1000}s`;
@@ -45,13 +66,16 @@ const shake = (element) => {
 
 const getUserCategory = (cards) => {
   const watchedCards = cards.filter((it) => it.watched);
-  const count = watchedCards.length;
-  if (count <= 10) {
-    return UserCategory[1];
-  } else if (count >= 11 && count <= 20) {
-    return UserCategory[2];
-  }
-  return UserCategory[3];
+  let result = ``;
+  Object.entries(USER_CATEGORY).every(([minimum, category]) => {
+    if (minimum <= watchedCards.length) {
+      result = category;
+      return true;
+    }
+    return false;
+  });
+
+  return result;
 };
 
 const createFilter = (name) => {
@@ -59,7 +83,7 @@ const createFilter = (name) => {
 
   const filterElement = new Filter(data);
   filterElement.render(filtersContainer);
-  let filteredCards = filterElement.toFilter(initialCards, name.toLowerCase());
+  const filteredCards = filterElement.toFilter(initialCards, name.toLowerCase());
   data.count = filteredCards.length;
   filterElement.update(data);
   if (filterElement._name === `All movies`) {
@@ -73,8 +97,11 @@ const createFilter = (name) => {
       filterActive.classList.remove(`main-navigation__item--active`);
     }
 
-    filmsBlock.classList.remove(`visually-hidden`);
-    statisticsBlock.classList.add(`visually-hidden`);
+    if (filmsBlock.classList.contains(`visually-hidden`)) {
+      filtersStatistic.map((element)=>element.unrender());
+      filmsBlock.classList.remove(`visually-hidden`);
+      statisticsBlock.classList.add(`visually-hidden`);
+    }
 
     outputCards = filterElement.toFilter(initialCards, filterElement._name.toLowerCase());
     data.count = (filterElement._name === `All movies`) ? `` : outputCards.length;
@@ -87,18 +114,29 @@ const createFilter = (name) => {
   return filterElement;
 };
 
+const createFilterStatistic = (name) => {
+  const filterStatisticElement = new FilterStatistic(name);
+
+  filterStatisticElement.onClick = () => {
+    const resultCards = filterStatisticElement.toFilter(initialCards, filterStatisticElement._name.toLowerCase());
+    displayStatistics(resultCards);
+  };
+
+  return filterStatisticElement;
+};
+
 const createFilters = () => {
   return FILTERS_NAMES.map((element)=>createFilter(element));
 };
 
 const updateFilters = () => {
-  for (let element of filters) {
+  for (const element of filters) {
     const filteredCards = element.toFilter(initialCards, element._name.toLowerCase());
     let filterCount = filteredCards.length;
     if (element._name === `All movies`) {
       filterCount = ``;
     }
-    let dataFilter = {
+    const dataFilter = {
       name: element._name,
       count: filterCount,
     };
@@ -113,17 +151,45 @@ const updateFilters = () => {
   profileRating.textContent = getUserCategory(initialCards);
 };
 
+const createSearch = () => {
+  const searchElement = new Search();
+  searchElement.render(searchBlock);
+
+  searchElement.onClick = () => {
+    const filterActive = document.querySelector(`.main-navigation__item--active`);
+    if (filterActive.textContent !== `All movies`) {
+      filterActive.classList.remove(`main-navigation__item--active`);
+      noFiltering.classList.add(`main-navigation__item--active`);
+
+      outputCards = initialCards;
+      displayedCardsIndex = 0;
+      renderCards(initialCards, filmsListContainerMain);
+    }
+  };
+
+  searchElement.onInput = () => {
+    outputCards = initialCards.filter((it) => it.title.toLowerCase().includes(searchElement._element.value.toLowerCase()));
+    displayedCardsIndex = 0;
+    renderCards(outputCards, filmsListContainerMain);
+  };
+
+  searchElement.onChange = () => {
+    searchElement._element.value = ``;
+  };
+};
+
 const renderCards = (cards, block) => {
   block.innerHTML = ``;
   let endCardsListIndex = cards.length;
 
   if (block === filmsListContainerMain) {
+    if (displayedCardsIndex === 0) {
+      showMoreBtn.classList.remove(`visually-hidden`);
+    }
     endCardsListIndex = Math.min(displayedCardsIndex + AMOUNT_CARDS_IN_ITERATION, cards.length);
     displayedCardsIndex = endCardsListIndex;
     if (endCardsListIndex === cards.length) {
-      showMoreBtn.classList.add(`visually-hidden`);
-    } else {
-      showMoreBtn.classList.remove(`visually-hidden`);
+      showMoreBtn.classList.toggle(`visually-hidden`);
     }
   }
 
@@ -163,7 +229,7 @@ const renderCards = (cards, block) => {
     };
 
     const updateData = () => {
-      api.updateCard({id: data.id, data: data.toRAW()})
+      provider.updateCard({id: data.id, data: data.toRAW()})
       .then((newCard) => {
         cardPopup.update(newCard);
         updateFilters();
@@ -173,11 +239,12 @@ const renderCards = (cards, block) => {
     cardPopup.onClickCloseBtn = (newData) => {
       data.ownRating = newData.score;
 
-      api.updateCard({id: data.id, data: data.toRAW()})
+      provider.updateCard({id: data.id, data: data.toRAW()})
       .then((newCard) => {
         cardPopup.update(newCard);
         cardElement.update(newCard);
         cardPopup.unrender();
+        toFillFilmsListsExtra(MOSTCOMMENTED_CARDSLIST_CONTAINER);
         updateFilters();
       });
     };
@@ -190,15 +257,15 @@ const renderCards = (cards, block) => {
       const commentInput = cardPopup.element.querySelector(`.film-details__comment-input`);
       commentInput.style.border = `1px solid initial`;
       commentInput.disabled = true;
-      api.updateCard({id: data.id, data: data.toRAW()})
+      provider.updateCard({id: data.id, data: data.toRAW()})
       .then((newCard) => {
         cardPopup.update(newCard);
         cardElement.update(newCard);
         cardPopup.updateCommentsBlock();
         commentInput.value = ``;
         commentInput.disabled = false;
-        cardPopup.element.querySelector(`.film-details__user-rating-controls`).classList.remove(`visually-hidden`);
-        toFillFilmsListsExtra(2);
+        cardPopup.element.querySelector(`.film-details__watched-reset`).classList.remove(`visually-hidden`);
+        cardPopup.element.querySelector(`.film-details__watched-status`).textContent = `Comment added`;
       })
       .catch(() => {
         commentInput.disabled = false;
@@ -222,19 +289,20 @@ const renderCards = (cards, block) => {
 
     cardPopup.onEscPress = () => {
       cardPopup.unrender();
+      toFillFilmsListsExtra(MOSTCOMMENTED_CARDSLIST_CONTAINER);
     };
 
     cardPopup.onDeleteComment = () => {
-      if (data.comments[data.comments.length - 1].author === `Me`) {
+      if (data.comments[data.comments.length - 1].author === USER_NAME) {
         const lastUserComment = data.comments[data.comments.length - 1];
         data.comments.pop();
-        api.updateCard({id: data.id, data: data.toRAW()})
+        provider.updateCard({id: data.id, data: data.toRAW()})
         .then((newCard) => {
           cardPopup.update(newCard);
           cardElement.update(newCard);
           cardPopup.updateCommentsBlock();
-          cardPopup.element.querySelector(`.film-details__user-rating-controls`).classList.add(`visually-hidden`);
-          toFillFilmsListsExtra(2);
+          cardPopup.element.querySelector(`.film-details__watched-reset`).classList.add(`visually-hidden`);
+          cardPopup.element.querySelector(`.film-details__watched-status`).textContent = `Comment deleted`;
         })
         .catch(() => {
           data.comments.push(lastUserComment);
@@ -244,44 +312,29 @@ const renderCards = (cards, block) => {
   }
 
   if (block === filmsListContainerMain) {
-    toFillFilmsListsExtra(1);
-    toFillFilmsListsExtra(2);
+    toFillFilmsListsExtra(TOPRATED_CARDSLIST_CONTAINER);
+    toFillFilmsListsExtra(MOSTCOMMENTED_CARDSLIST_CONTAINER);
   }
 };
 
 const toFillFilmsListsExtra = (numberOfContainer) => {
-  // отрисовать карточки в допконтейнерах
   const accessoryArrayCards = initialCards.slice(0);
   if (numberOfContainer === 1) {
     accessoryArrayCards.sort((prev, next) => next.rating - prev.rating);
   } else if (numberOfContainer === 2) {
     accessoryArrayCards.sort((prev, next) => next.comments.length - prev.comments.length);
   }
-  renderCards(accessoryArrayCards.slice(0, QUANTITY_CARDS_OF_FILM_LIST_EXTRA), filmsListExtraContainers[numberOfContainer - 1]);
+  renderCards(accessoryArrayCards.slice(0, QUANTITY_CARDS_IN_FILM_LIST_EXTRA), filmsListExtraContainers[numberOfContainer - 1]);
 };
 
 const listenerClickStatisticBtn = () => {
-  statisticsBlock.classList.remove(`visually-hidden`);
-  filmsBlock.classList.add(`visually-hidden`);
-  displayStatistics(initialCards);
-};
-
-const listenerClickOnSearchField = () => {
-  const filterActive = document.querySelector(`.main-navigation__item--active`);
-  if (filterActive.textContent !== `All movies`) {
-    filterActive.classList.remove(`main-navigation__item--active`);
-    noFiltering.classList.add(`main-navigation__item--active`);
-
-    outputCards = initialCards;
-    displayedCardsIndex = 0;
-    renderCards(initialCards, filmsListContainerMain);
+  if (statisticsBlock.classList.contains(`visually-hidden`)) {
+    filtersStatistic.map((element)=>element.render(filtersStatisticContainer));
+    statisticsBlock.classList.remove(`visually-hidden`);
+    filmsBlock.classList.add(`visually-hidden`);
   }
-};
-
-const listenerChangesOnSearchField = () => {
-  outputCards = initialCards.filter((it) => it.title.toLowerCase().includes(searchField.value.toLowerCase()));
-  displayedCardsIndex = 0;
-  renderCards(outputCards, filmsListContainerMain);
+  const resultCards = initialCards.filter((it) => it.watched);
+  displayStatistics(resultCards);
 };
 
 const listenerClickOnShowMoreBtn = () => {
@@ -290,13 +343,13 @@ const listenerClickOnShowMoreBtn = () => {
 
 const getStarted = () => {
   filters = createFilters();
+  filtersStatistic = FILTERS_STATISTIC_NAMES.map((element)=>createFilterStatistic(element));
+  createSearch();
   statisticBtn.addEventListener(`click`, listenerClickStatisticBtn);
-  searchField.addEventListener(`click`, listenerClickOnSearchField);
-  searchField.addEventListener(`input`, listenerChangesOnSearchField);
   showMoreBtn.addEventListener(`click`, listenerClickOnShowMoreBtn);
   loadMessageTextContainer.textContent = `Loading movies...`;
   loadMessageTextContainer.style.width = `260px`;
-  api.getCards()
+  provider.getCards()
     .then((cards) => {
       initialCards = cards.slice(0);
       renderCards(initialCards, filmsListContainerMain);
