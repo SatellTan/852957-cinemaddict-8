@@ -1,5 +1,4 @@
 import Component from './component';
-import createElement from './create-element';
 import moment from 'moment';
 
 export default class FilterStatistic extends Component {
@@ -14,10 +13,6 @@ export default class FilterStatistic extends Component {
     this._onClick = fn;
   }
 
-  get element() {
-    return this._element;
-  }
-
   get template() {
     const nameLowCase = this._name.toLowerCase().split(` `).join(`-`);
     return `
@@ -26,7 +21,22 @@ export default class FilterStatistic extends Component {
     `.trim();
   }
 
-  toFilter(cards, filterName) {
+  _onFilterClick() {
+    if (typeof this._onClick === `function`) {
+      this._onClick();
+    }
+  }
+
+  bind() {
+    this._listener = this._onFilterClick.bind(this);
+    this._element.addEventListener(`click`, this._listener);
+  }
+
+  unbind() {
+    this._element.removeEventListener(`click`, this._listener);
+  }
+
+  static toFilter(cards, filterName) {
 
     switch (filterName) {
       case `all time`:
@@ -46,27 +56,6 @@ export default class FilterStatistic extends Component {
 
       default: return cards.filter((it) => it.watched);
     }
-  }
-
-  _onFilterClick() {
-    if (typeof this._onClick === `function`) {
-      this._onClick();
-    }
-  }
-
-  render(container) {
-    this._element = createElement(this.template, container, `beforeend`);
-    this.bind();
-    return this._element;
-  }
-
-  bind() {
-    this._listener = this._onFilterClick.bind(this);
-    this._element.addEventListener(`click`, this._listener);
-  }
-
-  unbind() {
-    this._element.removeEventListener(`click`, this._listener);
   }
 
 }

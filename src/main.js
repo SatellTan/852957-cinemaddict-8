@@ -14,7 +14,7 @@ import Provider from './provider';
 import Store from './store';
 
 const QUANTITY_CARDS_IN_FILM_LIST_EXTRA = 2;
-const AUTHORIZATION = `Basic dXNlckBwYXNzd29yZAo=${Math.random()}`;
+const AUTHORIZATION = `Basic dXNlckBwYXNzd29yZAo=4`;
 const END_POINT = `https://es8-demo-srv.appspot.com/moowle`;
 const CARDS_STORE_KEY = `cards-store-key`;
 const ANIMATION_TIMEOUT = 600;
@@ -43,6 +43,7 @@ let displayedCardsIndex;
 let filters;
 let filtersStatistic;
 let noFiltering;
+let openedCardPopup = null;
 
 const api = new API({endPoint: END_POINT, authorization: AUTHORIZATION});
 const store = new Store({key: CARDS_STORE_KEY, storage: localStorage});
@@ -51,6 +52,7 @@ const provider = new Provider({api, store, generateId: () => String(Date.now())}
 window.addEventListener(`offline`, () => {
   document.title = `${document.title}[OFFLINE]`;
 });
+
 window.addEventListener(`online`, () => {
   document.title = document.title.split(`[OFFLINE]`)[0];
   provider.syncCards();
@@ -82,8 +84,8 @@ const createFilter = (name) => {
   const data = generateDataFilter(name);
 
   const filterElement = new Filter(data);
-  filterElement.render(filtersContainer);
-  const filteredCards = filterElement.toFilter(initialCards, name.toLowerCase());
+  filterElement.render(filtersContainer, `afterbegin`);
+  const filteredCards = Filter.toFilter(initialCards, name.toLowerCase());
   data.count = filteredCards.length;
   filterElement.update(data);
   if (filterElement._name === `All movies`) {
@@ -103,7 +105,7 @@ const createFilter = (name) => {
       statisticsBlock.classList.add(`visually-hidden`);
     }
 
-    outputCards = filterElement.toFilter(initialCards, filterElement._name.toLowerCase());
+    outputCards = Filter.toFilter(initialCards, filterElement._name.toLowerCase());
     data.count = (filterElement._name === `All movies`) ? `` : outputCards.length;
     filterElement.update(data);
     filterElement.element.classList.add(`main-navigation__item--active`);
@@ -118,7 +120,7 @@ const createFilterStatistic = (name) => {
   const filterStatisticElement = new FilterStatistic(name);
 
   filterStatisticElement.onClick = () => {
-    const resultCards = filterStatisticElement.toFilter(initialCards, filterStatisticElement._name.toLowerCase());
+    const resultCards = FilterStatistic.toFilter(initialCards, filterStatisticElement._name.toLowerCase());
     displayStatistics(resultCards);
   };
 
@@ -131,7 +133,7 @@ const createFilters = () => {
 
 const updateFilters = () => {
   for (const element of filters) {
-    const filteredCards = element.toFilter(initialCards, element._name.toLowerCase());
+    const filteredCards = Filter.toFilter(initialCards, element._name.toLowerCase());
     let filterCount = filteredCards.length;
     if (element._name === `All movies`) {
       filterCount = ``;
@@ -201,11 +203,11 @@ const renderCards = (cards, block) => {
     cardElement.render(cardElement.block);
 
     cardElement.onClickComments = () => {
-      const openCardPopup = document.querySelector(`.film-details`);
-      if (openCardPopup) {
-        openCardPopup.parentNode.removeChild(openCardPopup);
+      if (openedCardPopup) {
+        openedCardPopup.unrender();
       }
       cardPopup.render(filmPopupContainer);
+      openedCardPopup = cardPopup;
       cardPopup.updateCommentsBlock();
     };
 
@@ -244,6 +246,7 @@ const renderCards = (cards, block) => {
         cardPopup.update(newCard);
         cardElement.update(newCard);
         cardPopup.unrender();
+        openedCardPopup = null;
         toFillFilmsListsExtra(MOSTCOMMENTED_CARDSLIST_CONTAINER);
         updateFilters();
       });
@@ -255,7 +258,6 @@ const renderCards = (cards, block) => {
       }
 
       const commentInput = cardPopup.element.querySelector(`.film-details__comment-input`);
-      commentInput.style.border = `1px solid initial`;
       commentInput.disabled = true;
       provider.updateCard({id: data.id, data: data.toRAW()})
       .then((newCard) => {
@@ -269,7 +271,6 @@ const renderCards = (cards, block) => {
       })
       .catch(() => {
         commentInput.disabled = false;
-        commentInput.style.border = `2px solid red`;
         shake(commentInput);
         data.comments.pop();
       });
@@ -289,6 +290,7 @@ const renderCards = (cards, block) => {
 
     cardPopup.onEscPress = () => {
       cardPopup.unrender();
+      openedCardPopup = null;
       toFillFilmsListsExtra(MOSTCOMMENTED_CARDSLIST_CONTAINER);
     };
 

@@ -16,13 +16,6 @@ export default class Store {
     return items[key];
   }
 
-  removeItem({key}) {
-    const items = this.getAll();
-    delete items[key];
-
-    this._storage.setItem(this._storeKey, JSON.stringify(items));
-  }
-
   getAll() {
     const emptyItems = {};
     const items = this._storage.getItem(this._storeKey);
