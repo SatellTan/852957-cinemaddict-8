@@ -29,10 +29,6 @@ export default class Card extends Component {
     this._selectorFavoriteBtn = null;
   }
 
-  get element() {
-    return this._element;
-  }
-
   set onAddToWatchList(fn) {
     this._onAddToWatchList = fn;
   }

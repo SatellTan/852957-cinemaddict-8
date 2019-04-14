@@ -4,10 +4,19 @@ self.addEventListener(`install`, (evt) => {
       return cache.addAll([
         `./`,
         `./index.html`,
-        `./statistic.html`,
         `./film-details.html`,
+        `./bundle.js`,
         `./css/main.css`,
         `./css/normalize.css`,
+        `./images/icon-favorite.svg`,
+        `./images/icon-watched.svg`,
+        `./images/icon-watchlist.svg`,
+        `./images/posters/accused.jpg`,
+        `./images/posters/blackmail.jpg`,
+        `./images/posters/blue-blazes.jpg`,
+        `./images/posters/fuga-da-new-york.jpg`,
+        `./images/posters/moonrise.jpg`,
+        `./images/posters/three-friends.jpg`,
       ]);
     });
   evt.waitUntil(openCache);

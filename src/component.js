@@ -18,8 +18,8 @@ export default class Component {
     throw new Error(`You have to define template.`);
   }
 
-  render(container) {
-    this._element = createElement(this.template, container);
+  render(container, position = `beforeend`) {
+    this._element = createElement(this.template, container, position);
     this.bind();
     return this._element;
   }

@@ -49,10 +49,6 @@ export default class CardPopup extends Component {
     this._selectorWatchedResetBtn = null;
   }
 
-  get element() {
-    return this._element;
-  }
-
   set onClickCloseBtn(fn) {
     this._onClickCloseBtn = fn;
   }
@@ -249,7 +245,6 @@ export default class CardPopup extends Component {
   _onCardPopupClickCloseBtn(evt) {
     evt.preventDefault();
     const newData = this._toGetFormDate();
-
     if (typeof this._onClickCloseBtn === `function`) {
       this._onClickCloseBtn(newData);
     }

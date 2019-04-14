@@ -19,28 +19,11 @@ export default class Provider {
           this._store.setItem({key: card.id, item: card.toRAW()});
           return card;
         });
-    } else {
-      const card = data;
-      this._needSync = true;
-      this._store.setItem({key: card.id, item: card});
-      return Promise.resolve(ModelCard.parseCard(card));
     }
-  }
-
-  createCard({card}) {
-    if (this._isOnline()) {
-      return this._api.createCard({card})
-        .then((data) => {
-          this._store.setItem({key: data.id, item: data.toRAW()});
-          return data;
-        });
-    } else {
-      card.id = this._generateId();
-      this._needSync = true;
-
-      this._store.setItem({key: card.id, item: card});
-      return Promise.resolve(ModelCard.parseCard(card));
-    }
+    const card = data;
+    this._needSync = true;
+    this._store.setItem({key: card.id, item: card});
+    return Promise.resolve(ModelCard.parseCard(card));
   }
 
   getCards() {
@@ -50,13 +33,11 @@ export default class Provider {
           cards.map((it) => this._store.setItem({key: it.id, item: it.toRAW()}));
           return cards;
         });
-    } else {
-      const rawCardsMap = this._store.getAll();
-      const rawCards = objectToArray(rawCardsMap);
-      const cards = ModelCard.parseCards(rawCards);
-
-      return Promise.resolve(cards);
     }
+    const rawCardsMap = this._store.getAll();
+    const rawCards = objectToArray(rawCardsMap);
+    const cards = ModelCard.parseCards(rawCards);
+    return Promise.resolve(cards);
   }
 
   syncCards() {

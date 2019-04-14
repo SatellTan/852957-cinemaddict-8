@@ -1,5 +1,4 @@
 import Component from './component';
-import createElement from './create-element';
 
 export default class Search extends Component {
   constructor() {
@@ -24,10 +23,6 @@ export default class Search extends Component {
     this._onChange = fn;
   }
 
-  get element() {
-    return this._element;
-  }
-
   get template() {
     return `<input type="text" name="search" class="search__field" placeholder="Search">`;
   }
@@ -50,12 +45,6 @@ export default class Search extends Component {
     }
   }
 
-  render(container) {
-    this._element = createElement(this.template, container, `afterbegin`);
-    this.bind();
-    return this._element;
-  }
-
   bind() {
     this._listenerClick = this._onSearchClick.bind(this);
     this._element.addEventListener(`click`, this._listenerClick);
@@ -66,8 +55,8 @@ export default class Search extends Component {
   }
 
   unbind() {
-    this._element.addEvenetListener(`click`, this._listenerClick);
-    this._element.addEvenetListener(`input`, this._listenerInput);
-    this._element.addEvenetListener(`change`, this._listenerChange);
+    this._element.removeEventListener(`click`, this._listenerClick);
+    this._element.removeEventListener(`input`, this._listenerInput);
+    this._element.removeEventListener(`change`, this._listenerChange);
   }
 }

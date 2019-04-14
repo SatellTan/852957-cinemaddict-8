@@ -1,5 +1,4 @@
 import Component from './component';
-import createElement from './create-element';
 
 export default class Filter extends Component {
   constructor(data) {
@@ -14,10 +13,6 @@ export default class Filter extends Component {
     this._onClick = fn;
   }
 
-  get element() {
-    return this._element;
-  }
-
   get template() {
     return `
     <a href="#${this._name.toLowerCase()}" class="main-navigation__item">${this._name}
@@ -25,7 +20,31 @@ export default class Filter extends Component {
     `.trim();
   }
 
-  toFilter(cards, filterName) {
+  _onFilterClick() {
+    if (typeof this._onClick === `function`) {
+      this._onClick();
+    }
+  }
+
+  _partialUpdate() {
+    this._element.innerHTML = this._count ? `${this._name}<span class="main-navigation__item-count">${this._count}</span>` : `${this._name}`;
+  }
+
+  update(data) {
+    this._count = data.count;
+    this._partialUpdate();
+  }
+
+  bind() {
+    this._listener = this._onFilterClick.bind(this);
+    this._element.addEventListener(`click`, this._listener);
+  }
+
+  unbind() {
+    this._element.removeEventListener(`click`, this._listener);
+  }
+
+  static toFilter(cards, filterName) {
 
     switch (filterName) {
       case `all movies`:
@@ -42,36 +61,6 @@ export default class Filter extends Component {
 
       default: return cards;
     }
-  }
-
-  _onFilterClick() {
-    if (typeof this._onClick === `function`) {
-      this._onClick();
-    }
-  }
-
-  _partialUpdate() {
-    this._element.innerHTML = this._count ? `${this._name}<span class="main-navigation__item-count">${this._count}</span>` : `${this._name}`;
-  }
-
-  render(container) {
-    this._element = createElement(this.template, container, `afterbegin`);
-    this.bind();
-    return this._element;
-  }
-
-  update(data) {
-    this._count = data.count;
-    this._partialUpdate();
-  }
-
-  bind() {
-    this._listener = this._onFilterClick.bind(this);
-    this._element.addEventListener(`click`, this._listener);
-  }
-
-  unbind() {
-    this._element.removeEventListener(`click`, this._listener);
   }
 
 }
